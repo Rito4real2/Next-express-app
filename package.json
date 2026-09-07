@@ -6,7 +6,6 @@
   "scripts": {
     "dev:client": "npm run dev --prefix client -- -p 3000",
     "dev:server": "npm run dev --prefix server",
-    "build": "next build",
     "dev": "concurrently -k -s first -n \"client,server\" -c \"cyan,green\" \"npm run dev:client\" \"npm run dev:server\""
   },
   "devDependencies": {

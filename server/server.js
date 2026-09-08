@@ -40,6 +40,10 @@ app.get('/api/health', (req, res) => {
 //   ]);
 // });
 
-app.listen(PORT, () => {
-  console.log(`Express server running at http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Express server running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

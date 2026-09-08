@@ -24,12 +24,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transaction', transactionRoute)
 
 // Health check route
+// Health check route
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Express backend is connected!',
-    dataBaseConfigured: Boolean(DATABASE_URL)
-});
+    dataBaseConfigured: Boolean(process.env.DATABASE_URL || process.env.MONGODB_URI)
+  });
 });
 
 // // Example API route

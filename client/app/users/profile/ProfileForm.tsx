@@ -28,7 +28,7 @@ export default function ProfileForm({ user }: { user: UserProfile }) {
     setErrorMessage(null);
 
     try {
-      const res = await fetch('/api/users/profile', {
+      const res = await fetch( process.env.NEXT_PUBLIC_API_URL + '/api/users/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, userName, gender }),

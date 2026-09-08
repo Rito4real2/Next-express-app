@@ -31,7 +31,7 @@ async function getAdminData(): Promise<AdminDashboardData | null> {
     const headersList = await headers();
     const cookieHeader = headersList.get('cookie') || '';
 
-    const res = await fetch('http://localhost:5000/api/auth/admin-dashboard-data', {
+    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/auth/admin-dashboard-data', {
       headers: {
         Cookie: cookieHeader, // Passes the HTTP-only JWT token cookie to Express
       },

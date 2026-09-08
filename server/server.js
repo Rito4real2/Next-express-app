@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 5000;
 connectDB()
 
 // Allow requests from Next.js dev server
-app.use(cors({ origin: 'http://localhost:3000', credentials: true, }));
+app.use(cors({ origin: ['http://localhost:3000', 'https://next-express-app-xi.vercel.app'], credentials: true, }));
 app.use(express.json());
 app.use(cookieParser()); // Enable cookie parsing
 
@@ -24,13 +24,13 @@ app.use('/api/auth', authRoutes);
 app.use('/api/transaction', transactionRoute)
 
 // Health check route
-// app.get('/api/health', (req, res) => {
-//   res.json({ 
-//     status: 'ok', 
-//     message: 'Express backend is connected!',
-//     dataBaseConfigured: Boolean(DATABASE_URL)
-// });
-// });
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'Express backend is connected!',
+    dataBaseConfigured: Boolean(DATABASE_URL)
+});
+});
 
 // // Example API route
 // app.get('/api/products', (req, res) => {

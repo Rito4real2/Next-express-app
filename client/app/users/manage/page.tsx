@@ -31,7 +31,7 @@ export default function UserManagement() {
   // Load Users
   const fetchUsers = async () => {
     try {
-      const res = await fetch( process.env.NEXT_PUBLIC_API_URL + '/api/users');
+      const res = await fetch('/api/users');
       const data = await res.json();
       if (res.ok) setUsers(data);
     } catch (err) {
@@ -50,7 +50,7 @@ export default function UserManagement() {
 
     if (editingId) {
       // --- PUT (Update) ---
-      const res = await fetch( process.env.NEXT_PUBLIC_API_URL + `/api/users/${editingId}`, {
+      const res = await fetch(`/api/users/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, userName, emailAddress, gender, balance, role }),
@@ -65,7 +65,7 @@ export default function UserManagement() {
       }
     } else {
       // --- POST (Create) ---
-      const res = await fetch( process.env.NEXT_PUBLIC_API_URL + '/api/users', {
+      const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, userName, emailAddress, password, gender, balance, role }),
@@ -86,7 +86,7 @@ export default function UserManagement() {
     setErrorMessage(null);
     if (!confirm('Are you sure you want to delete this user?')) return;
 
-    const res = await fetch( process.env.NEXT_PUBLIC_API_URL + `/api/users/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
     const data = await res.json();
 
     if (res.ok) {

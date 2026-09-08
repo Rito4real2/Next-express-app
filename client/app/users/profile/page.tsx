@@ -19,7 +19,7 @@ async function getUserProfile(): Promise<UserProfile | null> {
     const headersList = await headers();
     const cookieHeader = headersList.get('cookie') || '';
 
-    const res = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/users/profile', {
+    const res = await fetch('http://localhost:5000/api/users/profile', {
       headers: { Cookie: cookieHeader },
       cache: 'no-store',
     });

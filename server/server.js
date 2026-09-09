@@ -16,7 +16,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-connectDB()
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // Allow requests from Next.js dev server
 app.use(cors({ origin: ['http://localhost:3000', 'https://next-express-app-xi.vercel.app'], credentials: true, }));

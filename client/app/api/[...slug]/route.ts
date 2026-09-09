@@ -1,4 +1,4 @@
-import app from "../../../../server/server";
+import app from "@/../server/server";
 
 export const dynamic = "force-dynamic"; // Ensures routes execute at runtime, not build time
 

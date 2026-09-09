@@ -2,7 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path')
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+}
+
 const connectDB = require('./config/db')
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user')

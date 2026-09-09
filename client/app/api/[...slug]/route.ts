@@ -1,9 +1,9 @@
-import app from '@/../server/server'; // Path to your server/server.js file
+import app from "../../../../server/server";
 
-// Helper function to process Next.js requests through Express
+export const dynamic = "force-dynamic"; // Ensures routes execute at runtime, not build time
+
 async function handleRequest(req: Request) {
   return new Promise<Response>((resolve) => {
-    // Mock Node response object for Express compatibility
     const res: any = {
       statusCode: 200,
       headers: {},
@@ -18,7 +18,7 @@ async function handleRequest(req: Request) {
         resolve(
           new Response(JSON.stringify(data), {
             status: this.statusCode,
-            headers: { 'Content-Type': 'application/json', ...this.headers },
+            headers: { "Content-Type": "application/json", ...this.headers },
           })
         );
       },
@@ -40,7 +40,6 @@ async function handleRequest(req: Request) {
       },
     };
 
-    // Convert web Request to express-friendly format and dispatch
     app(req as any, res);
   });
 }

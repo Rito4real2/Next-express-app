@@ -26,6 +26,8 @@ export default function RegisterPage() {
     });
   };
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -46,7 +48,7 @@ export default function RegisterPage() {
 
     try {
       // Inside handleRegister in client/src/app/register/page.tsx
-        const res = await fetch('http://localhost:5000/api/users', {
+        const res = await fetch(`${API_BASE_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData }),

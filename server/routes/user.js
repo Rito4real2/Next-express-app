@@ -117,8 +117,8 @@ router.get('/', async (req, res) => {
 });
 
 // CREATE USER & AUTO-LOGIN
-// POST /api/users
-router.post('/', async (req, res) => {
+// POST /api/users/register
+router.post('/register', async (req, res) => {
   try {
     const { fullName, userName, emailAddress, password, gender, balance, role } = req.body;
 

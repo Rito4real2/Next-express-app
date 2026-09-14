@@ -5,15 +5,15 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/**/*": ["../server/**/*"],
   },
-  serverExternalPackages: [
-    "express",
-    "mongoose",
-    "cors",
-    "cookie-parser",
-    "bcryptjs",
-    "jsonwebtoken",
-    "dotenv",
-  ],
+  // serverExternalPackages: [
+  //   "express",
+  //   "mongoose",
+  //   "cors",
+  //   "cookie-parser",
+  //   "bcryptjs",
+  //   "jsonwebtoken",
+  //   "dotenv",
+  // ],
 };
 
 export default nextConfig;

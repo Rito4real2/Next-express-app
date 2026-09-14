@@ -3,19 +3,15 @@ import path from "path";
 
 export const dynamic = "force-dynamic";
 
-// Helper function to resolve and load the Express app dynamically
 function getExpressApp() {
   try {
-    // Force Node's native require to bypass Webpack static bundling restrictions
     const nativeRequire = eval("require");
-    
-    // Resolve absolute path to server/server.js relative to execution root
+    // Path relative to the client execution directory
     const serverPath = path.resolve(process.cwd(), "../server/server.js");
     const serverModule = nativeRequire(serverPath);
-    
     return serverModule.default || serverModule;
   } catch (error: any) {
-    console.error("CRITICAL: Failed to load Express app module:", error);
+    console.error("Failed to load Express module:", error);
     throw error;
   }
 }
@@ -25,7 +21,6 @@ async function handleRequest(req: NextRequest) {
     const app = getExpressApp();
 
     return new Promise<NextResponse>((resolve) => {
-      // Mock Express response object for Next.js App Router
       const res: any = {
         statusCode: 200,
         headers: {} as Record<string, string>,

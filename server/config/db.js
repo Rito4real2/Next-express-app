@@ -1,10 +1,8 @@
-// server/config/db.js
 const mongoose = require('mongoose');
 
 let isConnected = false;
 
 const connectDB = async () => {
-  // Prevent duplicate connections during hot-reloads
   if (isConnected || mongoose.connection.readyState >= 1) {
     return;
   }
@@ -12,16 +10,18 @@ const connectDB = async () => {
   const dbUri = process.env.MONGO_URI || process.env.MONGODB_URI || process.env.DATABASE_URL;
 
   if (!dbUri) {
-    console.error('CRITICAL: MONGO_URI is undefined in process.env!');
-    return;
+    throw new Error('MONGO_URI environment variable is missing on Vercel!');
   }
 
   try {
-    const db = await mongoose.connect(dbUri);
+    const db = await mongoose.connect(dbUri, {
+      bufferCommands: false, // Disable Mongoose buffering in serverless
+    });
     isConnected = db.connections[0].readyState === 1;
     console.log(`MongoDB Connected: ${db.connection.host}`);
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
+    console.error(`MongoDB Connection Error: ${error.message}`);
+    throw error; // Re-throw to be caught safely by server.js middleware
   }
 };
 

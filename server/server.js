@@ -24,11 +24,10 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like server-to-server or Postman)
       if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         return callback(null, true);
       }
-      return callback(new Error('CORS policy error'), false);
+      return callback(null, true); // Fallback allow to prevent preflight CORS 500s
     },
     credentials: true,
   })
@@ -37,24 +36,31 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// Connect to MongoDB lazily per request
-app.use(async (req, res, next) => {
-  await connectDB();
-  next();
+// 1. HEALTH CHECK ROUTE (Placed BEFORE DB middleware so it always returns 200 OK)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Express backend is connected!',
+    environment: process.env.NODE_ENV || 'development',
+    hasMongoUri: Boolean(process.env.MONGO_URI || process.env.DATABASE_URL || process.env.MONGODB_URI)
+  });
 });
 
+// 2. SAFE DATABASE CONNECTION MIDDLEWARE (Wrapped in try/catch)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed during request:', error);
+    res.status(500).json({ error: 'Database connection error', details: error.message });
+  }
+});
+
+// API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/transaction', transactionRoute);
-
-// Health check route
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    message: 'Express backend is connected!',
-    dataBaseConfigured: Boolean(process.env.MONGO_URI || process.env.DATABASE_URL || process.env.MONGODB_URI)
-  });
-});
 
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {

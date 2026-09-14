@@ -23,13 +23,17 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-        return callback(null, true);
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Or pass origin for production flexibility
       }
-      return callback(null, true); // Fallback allow to prevent preflight CORS 500s
     },
-    credentials: true,
+    credentials: true, // Allows HTTP-Only JWT cookies
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

@@ -13,7 +13,7 @@ export default function UserLoginPage() {
   const router = useRouter();
 
   // Use environment variable if provided, otherwise default to relative '/api' endpoint
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();

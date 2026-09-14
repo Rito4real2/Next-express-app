@@ -8,7 +8,8 @@ const nextConfig: NextConfig = {
     "cors",
     "cookie-parser",
     "bcryptjs",
-    "jsonwebtoken"
+    "jsonwebtoken",
+    "dotenv"
   ],
 };
 

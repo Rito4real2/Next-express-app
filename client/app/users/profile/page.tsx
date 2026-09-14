@@ -1,5 +1,5 @@
 // client/src/app/dashboard/page.tsx
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import ProfileForm from './ProfileForm';
 import UserLogoutButton from './UserLogoutButton';
@@ -17,16 +17,27 @@ interface UserProfile {
 async function getUserProfile(): Promise<UserProfile | null> {
   try {
     const headersList = await headers();
-    const cookieHeader = headersList.get('cookie') || '';
+    const cookieStore = await cookies();
+    
+    // 1. Construct absolute URL dynamically for SSR
+    const host = headersList.get('host') || 'localhost:3000';
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const apiUrl = `${protocol}://${host}/api/users/profile`;
 
-    const res = await fetch('http://localhost:5000/api/users/profile', {
-      headers: { Cookie: cookieHeader },
+    // 2. Pass authorization/cookie headers directly
+    const cookieHeader = cookieStore.toString();
+
+    const res = await fetch(apiUrl, {
+      headers: { 
+        Cookie: cookieHeader 
+      },
       cache: 'no-store',
     });
 
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
+    console.error('Failed to fetch user profile during SSR:', error);
     return null;
   }
 }

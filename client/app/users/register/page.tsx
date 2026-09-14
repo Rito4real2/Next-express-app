@@ -65,7 +65,7 @@ export default function RegisterPage() {
       }
 
       // Redirect straight to dashboard or profile page
-      router.push('/dashboard');
+      router.push('/users/profile');
       router.refresh();
     } catch (err) {
       setError('Server connection error. Please try again.');

@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Prevents Next.js Webpack from bundling Express server dependencies
+  // Ensure Vercel includes the server folder in the deployed serverless bundle
+  outputFileTracingIncludes: {
+    "/api/**/*": ["../server/**/*"],
+  },
   serverExternalPackages: [
     "express",
     "mongoose",
@@ -9,7 +12,7 @@ const nextConfig: NextConfig = {
     "cookie-parser",
     "bcryptjs",
     "jsonwebtoken",
-    "dotenv"
+    "dotenv",
   ],
 };
 

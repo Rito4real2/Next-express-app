@@ -1,61 +1,56 @@
-import app from "@/../server/server";
+// client/app/api/[...slug]/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic"; // Ensures routes execute at runtime, not build time
+export const dynamic = "force-dynamic";
 
-async function handleRequest(req: Request) {
-  return new Promise<Response>((resolve) => {
-    const res: any = {
+// Helper to safely load server code without Webpack tracing it at build time
+function getExpressApp() {
+  // eval('require') bypasses Webpack static analysis at build time
+  const req = eval("require");
+  const serverModule = req("../../../server/server");
+  return serverModule.default || serverModule;
+}
+
+async function handleRequest(req: NextRequest) {
+  const expressApp = getExpressApp();
+
+  return new Promise<NextResponse>((resolve) => {
+    // Pass request to Express app
+    expressApp(req, {
       statusCode: 200,
       headers: {},
-      setHeader(key: string, value: string) {
-        this.headers[key] = value;
+      setHeader(key: string, val: string) {
+        this.headers[key] = val;
       },
       status(code: number) {
         this.statusCode = code;
         return this;
       },
       json(data: any) {
-        resolve(
-          new Response(JSON.stringify(data), {
-            status: this.statusCode,
-            headers: { "Content-Type": "application/json", ...this.headers },
-          })
-        );
+        resolve(NextResponse.json(data, { status: this.statusCode }));
       },
       send(data: any) {
-        resolve(
-          new Response(data, {
-            status: this.statusCode,
-            headers: this.headers,
-          })
-        );
+        resolve(new NextResponse(data, { status: this.statusCode }));
       },
       end(data: any) {
-        resolve(
-          new Response(data, {
-            status: this.statusCode,
-            headers: this.headers,
-          })
-        );
+        resolve(new NextResponse(data, { status: this.statusCode }));
       },
-    };
-
-    app(req as any, res);
+    });
   });
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   return handleRequest(request);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   return handleRequest(request);
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   return handleRequest(request);
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   return handleRequest(request);
 }

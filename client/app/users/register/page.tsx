@@ -19,7 +19,9 @@ export default function RegisterPage() {
 
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -45,23 +47,26 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Inside handleRegister in client/src/app/register/page.tsx
-        const res = await fetch(`/api/users`, {
+      // Exclude confirmPassword from request body
+      const { confirmPassword, ...payload } = formData;
+
+      const res = await fetch('/api/users/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData }),
-        });
+        credentials: 'include', // Ensures HTTP-Only cookies are stored in browser
+        body: JSON.stringify(payload),
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        if (!res.ok) {
-        setError(data.error || 'Registration failed');
+      if (!res.ok) {
+        setError(data.message || data.error || 'Registration failed');
         return;
-        }
+      }
 
-        // Redirect straight to dashboard since cookie was automatically set
-        router.push('/users/profile');
-        router.refresh();
+      // Redirect straight to dashboard or profile page
+      router.push('/dashboard');
+      router.refresh();
     } catch (err) {
       setError('Server connection error. Please try again.');
     } finally {
@@ -74,7 +79,9 @@ export default function RegisterPage() {
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Create an Account</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign up to get started with your account.</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Sign up to get started with your account.
+          </p>
         </div>
 
         {error && (
@@ -85,7 +92,9 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Full Name
+            </label>
             <input
               type="text"
               name="fullName"
@@ -98,7 +107,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Username</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
             <input
               type="text"
               name="userName"
@@ -111,7 +122,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email Address</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Email Address
+            </label>
             <input
               type="email"
               name="emailAddress"
@@ -124,7 +137,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Gender</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Gender
+            </label>
             <select
               name="gender"
               value={formData.gender}
@@ -138,7 +153,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
             <input
               type="password"
               name="password"
@@ -151,7 +168,9 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Confirm Password
+            </label>
             <input
               type="password"
               name="confirmPassword"
@@ -174,7 +193,10 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-gray-600">
           Already have an account?{' '}
-          <Link href="/users/dashboard" className="text-blue-600 font-medium hover:underline">
+          <Link
+            href="/users/login"
+            className="text-blue-600 font-medium hover:underline"
+          >
             Log in here
           </Link>
         </p>

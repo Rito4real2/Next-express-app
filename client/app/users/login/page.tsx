@@ -12,16 +12,13 @@ export default function UserLoginPage() {
 
   const router = useRouter();
 
-  // Use environment variable if provided, otherwise default to relative '/api' endpoint
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
-
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/users/login`, {
+      const res = await fetch('/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

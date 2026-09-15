@@ -14,6 +14,8 @@ interface UserProfile {
   role: 'user' | 'admin';
 }
 
+export const dynamic = 'force-dynamic';
+
 async function getUserProfile(): Promise<UserProfile | null> {
   try {
     const headersList = await headers();

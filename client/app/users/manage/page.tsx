@@ -35,7 +35,9 @@ export default function UserManagement() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/me'); // Adjust endpoint to match your authentication route
+        const res = await fetch('/api/users/me', { 
+          credentials: 'include', // Ensure cookies are sent for authentication
+        }); 
         if (res.ok) {
           const userData: User = await res.json();
           setCurrentUser(userData);

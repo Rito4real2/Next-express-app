@@ -8,6 +8,7 @@ export default function AdminLogin() {
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: FormEvent) => {
@@ -68,8 +69,8 @@ export default function AdminLogin() {
           />
         </div>
 
-        <button type="submit" className="w-full py-2 bg-purple-700 text-white rounded font-medium hover:bg-purple-800">
-          Log In as Admin
+        <button type="submit" disabled={loading} className="w-full py-2 bg-purple-700 text-white rounded font-medium hover:bg-purple-800">
+          {loading ? 'Loggin in...' : 'Login as Admin'}
         </button>
       </form>
     </div>

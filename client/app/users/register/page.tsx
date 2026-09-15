@@ -32,13 +32,11 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
-    // Client-side validation: Password match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    // Client-side validation: Password strength
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
       return;
@@ -47,28 +45,29 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Exclude confirmPassword from request body
       const { confirmPassword, ...payload } = formData;
 
-      const res = await fetch('/api/users/register', {
+      // Ensure API destination points correctly to your server port if rewrites aren't used
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+      const res = await fetch(`${backendUrl}/api/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Ensures HTTP-Only cookies are stored in browser
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError(data.message || data.error || 'Registration failed');
+        setError(data?.message || data?.error || 'Registration failed');
         return;
       }
 
-      // Redirect straight to dashboard or profile page
       router.push('/users/profile');
       router.refresh();
     } catch (err) {
-      setError('Server connection error. Please try again.');
+      setError('Server connection error. Please ensure the backend is running.');
     } finally {
       setLoading(false);
     }
@@ -92,9 +91,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Full Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Full Name</label>
             <input
               type="text"
               name="fullName"
@@ -107,9 +104,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Username
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Username</label>
             <input
               type="text"
               name="userName"
@@ -122,9 +117,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email Address
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Email Address</label>
             <input
               type="email"
               name="emailAddress"
@@ -137,9 +130,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Gender
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Gender</label>
             <select
               name="gender"
               value={formData.gender}
@@ -153,9 +144,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
             <input
               type="password"
               name="password"
@@ -168,9 +157,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Confirm Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
             <input
               type="password"
               name="confirmPassword"

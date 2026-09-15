@@ -20,6 +20,59 @@ const requireAuth = async (req, res, next) => {
   }
 };
 
+// POST /api/users/register and login user
+router.post('/register', async (req, res) => {
+  try {
+    const { fullName, userName, emailAddress, password, gender, balance, role } = req.body;
+
+    // Optional: Add basic input verification before DB hit
+    if (!fullName || !userName || !emailAddress || !password) {
+      return res.status(400).json({ error: 'Please fill in all required fields.' });
+    }
+
+    // 1. Create the new user
+    const newUser = await User.create({
+      fullName,
+      userName,
+      emailAddress,
+      password,
+      gender,
+      balance: balance ?? 0,
+      role: role || 'user',
+    });
+
+    // 2. Generate JWT token
+    const token = jwt.sign(
+      { id: newUser._id, role: newUser.role },
+      process.env.JWT_SECRET || 'fallback_secret',
+      { expiresIn: '1d' }
+    );
+
+    // 3. Set HTTP-Only cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // 4. Exclude password from payload response
+    const userResponse = newUser.toObject();
+    delete userResponse.password;
+
+    return res.status(201).json({
+      message: 'Account created and logged in successfully',
+      user: userResponse,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyValue || {})[0] || 'field';
+      return res.status(400).json({ error: `An account with that ${field} already exists.` });
+    }
+    return res.status(400).json({ error: err.message || 'Failed to create user account' });
+  }
+});
+
 // USER LOGIN
 // POST /api/users/login
 router.post('/login', async (req, res) => {
@@ -113,56 +166,6 @@ router.get('/', async (req, res) => {
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-});
-
-// CREATE USER & AUTO-LOGIN
-// POST /api/users/register
-router.post('/register', async (req, res) => {
-  try {
-    const { fullName, userName, emailAddress, password, gender, balance, role } = req.body;
-
-    // 1. Create the new user (Password hashed via Mongoose pre-save hook)
-    const newUser = await User.create({
-      fullName,
-      userName,
-      emailAddress,
-      password,
-      gender,
-      balance: balance ?? 0,
-      role: role || 'user',
-    });
-
-    // 2. Generate a JWT token for the newly created user
-    const token = jwt.sign(
-      { id: newUser._id, role: newUser.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-
-    // 3. Set the HTTP-Only cookie for automatic session start
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
-
-    // 4. Format response without password
-    const userResponse = newUser.toObject();
-    delete userResponse.password;
-
-    res.status(201).json({
-      message: 'Account created and logged in successfully',
-      user: userResponse,
-    });
-  } catch (err) {
-    // Handle duplicate key errors (E11000 for email/username)
-    if (err.code === 11000) {
-      const field = Object.keys(err.keyValue)[0];
-      return res.status(400).json({ error: `An account with that ${field} already exists.` });
-    }
-    res.status(400).json({ error: err.message });
   }
 });
 

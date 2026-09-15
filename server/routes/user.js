@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken'); // Fixed: Added missing import
 const User = require('../models/User');
+const { requireAdmin } = require('../middleware/auth');
 
 // Middleware to verify logged-in user (Any role: user or admin)
 const requireAuth = async (req, res, next) => {
@@ -134,6 +135,14 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// --- CURRENT USER ROUTES ---
+
+// GET /api/users/me (or /api/me if mounted at root)
+// Matches Next.js client checkAuth fetch
+router.get('/me', requireAuth, (req, res) => {
+  res.json(req.user);
+});
+
 // GET PROFILE (Must be defined BEFORE /:id)
 // GET /api/users/profile
 router.get('/profile', requireAuth, (req, res) => {
@@ -158,9 +167,11 @@ router.put('/profile', requireAuth, async (req, res) => {
   }
 });
 
+// --- ADMIN-ONLY ROUTES ---
+
 // GET ALL USERS
-// GET /api/users
-router.get('/', requireAuth, async (req, res) => {
+// GET /api/users (list all users, admin only)
+router.get('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
@@ -187,8 +198,8 @@ router.get('/:id', requireAuth, async (req, res) => {
 });
 
 // UPDATE USER BY ID
-// PUT /api/users/:id
-router.put('/:id', requireAuth, async (req, res) => {
+// PUT /api/users/:id (Admin update user details)
+router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const updateData = { ...req.body };
     delete updateData.password;
@@ -214,7 +225,7 @@ router.put('/:id', requireAuth, async (req, res) => {
 
 // DELETE USER
 // DELETE /api/users/:id
-router.delete('/:id', requireAuth, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 

@@ -1,4 +1,3 @@
-// client/src/app/admin/dashboard/page.tsx
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LogoutButton from './LogoutButton';
@@ -23,23 +22,25 @@ interface AdminDashboardData {
   };
 }
 
-export const dynamic = 'force-dynamic'; // Ensures the page is always server-rendered and not cached
+export const dynamic = 'force-dynamic';
 
 async function getAdminData(): Promise<AdminDashboardData | null> {
   try {
-    // Forward incoming request cookies to Express server
     const headersList = await headers();
     const cookieHeader = headersList.get('cookie') || '';
 
-    const res = await fetch('/api/auth/admin-dashboard-data', {
+    // If server rewrites aren't set, fallback to absolute URL
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+    const res = await fetch(`${backendUrl}/api/auth/admin-dashboard-data`, {
       headers: {
-        Cookie: cookieHeader, // Passes the HTTP-only JWT token cookie to Express
+        Cookie: cookieHeader,
       },
       cache: 'no-store',
     });
 
     if (res.status === 401 || res.status === 403) {
-      return null; // Not authorized or missing token
+      return null;
     }
 
     if (!res.ok) {
@@ -56,7 +57,6 @@ async function getAdminData(): Promise<AdminDashboardData | null> {
 export default async function AdminDashboardPage() {
   const data = await getAdminData();
 
-  // Redirect to login if unauthenticated or not an admin
   if (!data) {
     redirect('/admin/login');
   }
@@ -64,7 +64,6 @@ export default async function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header Section */}
         <div className="flex items-center justify-between border-b pb-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -75,7 +74,6 @@ export default async function AdminDashboardPage() {
           <LogoutButton />
         </div>
 
-        {/* Metrics Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-lg border shadow-sm">
             <p className="text-sm font-medium text-gray-500">Total System Users</p>
@@ -91,7 +89,6 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Recent Registrations Table */}
         <div className="bg-white rounded-lg border shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Recently Registered Users</h2>
           <div className="overflow-x-auto">

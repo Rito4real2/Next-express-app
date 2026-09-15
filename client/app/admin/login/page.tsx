@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 
 export default function AdminLogin() {
   const [userName, setUserName] = useState('');
-  const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -14,25 +13,30 @@ export default function AdminLogin() {
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     try {
       const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userName, emailAddress, password }),
+        credentials: 'include', // <--- CRITICAL: Allows browser to save HTTP-Only JWT Cookie
+        body: JSON.stringify({ userName, emailAddress: userName, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error);
+        setError(data.error || 'Login failed');
         return;
       }
 
-      // Redirect to admin dashboard on success
+      // Successfully authenticated
       router.push('/admin/dashboard');
+      router.refresh(); // Refresh route tree so server components re-evaluate headers/cookies
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError('An unexpected network error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,7 +57,7 @@ export default function AdminLogin() {
             type="text"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
-            className="w-full p-2 border rounded mt-1"
+            className="w-full p-2 border rounded mt-1 text-gray-800"
             required
           />
         </div>
@@ -64,12 +68,16 @@ export default function AdminLogin() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded mt-1"
+            className="w-full p-2 border rounded mt-1 text-gray-800"
             required
           />
         </div>
 
-        <button type="submit" disabled={loading} className="w-full py-2 bg-purple-700 text-white rounded font-medium hover:bg-purple-800">
+        <button 
+          type="submit" 
+          disabled={loading} 
+          className="w-full py-2 bg-purple-700 text-white rounded font-medium hover:bg-purple-800 disabled:opacity-50"
+        >
           {loading ? 'Logging in...' : 'Login as Admin'}
         </button>
       </form>

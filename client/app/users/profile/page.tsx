@@ -1,6 +1,7 @@
 // client/src/app/dashboard/page.tsx
 import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import ProfileForm from './ProfileForm';
 import UserLogoutButton from './UserLogoutButton';
 
@@ -72,6 +73,15 @@ export default async function UserDashboard() {
             <p className="text-3xl font-bold text-green-600 mt-1">
               ${user.balance.toLocaleString()}
             </p>
+          <div className="mt-4">
+            <button className="mt-4 px-4 py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition">
+              <Link href="/users/deposit">Deposit Funds</Link>
+            </button>
+            <button className="mt-4 ml-2 px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition">
+              <Link href="/users/withdraw">Withdraw Funds</Link>
+            </button>
+          </div>
+
           </div>
 
           <div className="bg-white p-6 rounded-lg border shadow-sm">

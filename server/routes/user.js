@@ -201,12 +201,24 @@ router.get('/:id', requireAuth, async (req, res) => {
 // PUT /api/users/:id (Admin update user details)
 router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    delete updateData.password;
+    const { fullName, userName, emailAddress, balance, role } = req.body;
+
+    // Build sanitised payload to prevent arbitrary schema pollution
+    const updateFields = {};
+    if (fullName !== undefined) updateFields.fullName = fullName;
+    if (userName !== undefined) updateFields.userName = userName;
+    if (emailAddress !== undefined) updateFields.emailAddress = emailAddress;
+    if (balance !== undefined) updateFields.balance = Number(balance);
+    if (role !== undefined && ['user', 'admin'].includes(role)) {
+      updateFields.role = role;
+    }
+
+    // Ensure password and security sensitive keys cannot be updated through this endpoint
+    delete updateFields.password;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      { $set: updateFields },
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -214,10 +226,20 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(updatedUser);
+    res.json({
+      message: 'User updated successfully',
+      user: updatedUser,
+    });
   } catch (err) {
     if (err.kind === 'ObjectId') {
       return res.status(400).json({ error: 'Invalid user ID format' });
+    }
+    // Handle duplicate key errors (e.g., email or username already taken)
+    if (err.code === 11000) {
+      const duplicateField = Object.keys(err.keyValue)[0];
+      return res.status(400).json({
+        error: `A user with that ${duplicateField} already exists`,
+      });
     }
     res.status(400).json({ error: err.message });
   }

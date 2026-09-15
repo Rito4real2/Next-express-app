@@ -92,9 +92,17 @@ export default async function AdminDashboardPage() {
 
         <div className="bg-white rounded-lg border shadow-sm p-6 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Recently Registered Users</h2>
-          <Link href="/users/manage" className="text-blue-600 hover:underline text-sm">
-            Manage Users
-          </Link>
+          <button>
+            <Link href="/users/manage" className="text-blue-600 hover:underline text-sm">
+              Manage Users
+            </Link>
+          </button>
+
+          <button>
+            <Link href="/users/manage/transactions" className="text-blue-600 hover:underline text-sm">
+              Manage Transactions
+            </Link>
+          </button>
         </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">

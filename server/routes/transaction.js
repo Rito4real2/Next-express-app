@@ -22,41 +22,7 @@ const requireAuth = async (req, res, next) => {
   }
 };
 
-// 1. MAKE A DEPOSIT (Instant Balance Addition)
-// POST /api/transactions/deposit
-router.post('/deposit', requireAuth, async (req, res) => {
-  try {
-    const { amount, paymentMethod } = req.body;
-    const depositAmount = Number(amount);
-
-    if (!depositAmount || depositAmount <= 0) {
-      return res.status(400).json({ error: 'Enter a valid deposit amount' });
-    }
-
-    // Update user balance directly
-    req.user.balance += depositAmount;
-    await req.user.save();
-
-    // Log transaction history (Auto-Approved)
-    const transaction = await Transaction.create({
-      user: req.user._id,
-      type: 'deposit',
-      amount: depositAmount,
-      status: 'approved',
-      paymentMethod: paymentMethod || 'Bank Transfer',
-    });
-
-    res.status(201).json({
-      message: 'Deposit successful!',
-      newBalance: req.user.balance,
-      transaction,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 2. REQUEST A WITHDRAWAL (Holds Pending State)
+// 1. REQUEST A WITHDRAWAL (Holds Pending State)
 // POST /api/transactions/withdraw
 router.post('/withdraw', requireAuth, async (req, res) => {
   try {

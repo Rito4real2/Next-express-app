@@ -7,13 +7,16 @@ interface User {
   fullName: string;
   userName: string;
   emailAddress: string;
-  password: string;
+  password?: string;
   gender: string;
   balance: number;
   role: 'user' | 'admin';
 }
 
 export default function UserManagement() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
   const [users, setUsers] = useState<User[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -28,7 +31,29 @@ export default function UserManagement() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Load Users
+  // 1. Authenticate Current User
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/me'); // Adjust endpoint to match your authentication route
+        if (res.ok) {
+          const userData: User = await res.json();
+          setCurrentUser(userData);
+        } else {
+          setCurrentUser(null);
+        }
+      } catch (err) {
+        console.error('Failed to authenticate:', err);
+        setCurrentUser(null);
+      } finally {
+        setIsLoadingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // 2. Load Users list only if current user is admin
   const fetchUsers = async () => {
     try {
       const res = await fetch('/api/users');
@@ -40,8 +65,10 @@ export default function UserManagement() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (currentUser?.role === 'admin') {
+      fetchUsers();
+    }
+  }, [currentUser]);
 
   // Form Handler (POST / PUT)
   const handleSubmit = async (e: FormEvent) => {
@@ -81,7 +108,7 @@ export default function UserManagement() {
     }
   };
 
-  // --- DELETE (Triggers custom hook logic) ---
+  // --- DELETE ---
   const handleDelete = async (id: string) => {
     setErrorMessage(null);
     if (!confirm('Are you sure you want to delete this user?')) return;
@@ -92,7 +119,6 @@ export default function UserManagement() {
     if (res.ok) {
       setUsers(users.filter((user) => user._id !== id));
     } else {
-      // Handles error from server when user is admin or has balance > 0
       setErrorMessage(data.error);
     }
   };
@@ -117,6 +143,20 @@ export default function UserManagement() {
     setBalance(0);
     setRole('user');
   };
+
+  // 3. Render Guarding
+  if (isLoadingAuth) {
+    return <div className="p-8 text-center text-gray-500">Checking authorization...</div>;
+  }
+
+  if (!currentUser || currentUser.role !== 'admin') {
+    return (
+      <div className="max-w-md mx-auto mt-12 p-6 bg-red-50 border border-red-200 text-red-700 rounded text-center space-y-2">
+        <h2 className="text-lg font-bold">Access Denied</h2>
+        <p className="text-sm">You must be an administrator to access user management.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-8 space-y-8">
@@ -164,7 +204,7 @@ export default function UserManagement() {
             />
           </div>
 
-           
+          {!editingId && (
             <div>
               <label className="block text-sm font-medium">Password</label>
               <input
@@ -175,7 +215,7 @@ export default function UserManagement() {
                 required
               />
             </div>
-
+          )}
 
           <div>
             <label className="block text-sm font-medium">Gender</label>
@@ -240,7 +280,6 @@ export default function UserManagement() {
                 </span>
               </div>
               <p className="text-sm text-gray-600">{u.emailAddress} • {u.gender}</p>
-              <p className="text-sm text-gray-600">{u.password}</p>
               <p className="text-sm font-medium text-green-700 mt-1">Balance: ${u.balance}</p>
             </div>
 

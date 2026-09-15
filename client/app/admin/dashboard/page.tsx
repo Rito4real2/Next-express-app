@@ -1,7 +1,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LogoutButton from './LogoutButton';
-import link from 'next/link';
 import Link from 'next/link';
 
 interface AdminDashboardData {

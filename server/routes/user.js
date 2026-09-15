@@ -160,7 +160,7 @@ router.put('/profile', requireAuth, async (req, res) => {
 
 // GET ALL USERS
 // GET /api/users
-router.get('/', async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
@@ -171,7 +171,7 @@ router.get('/', async (req, res) => {
 
 // GET USER BY ID
 // GET /api/users/:id
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
@@ -188,7 +188,7 @@ router.get('/:id', async (req, res) => {
 
 // UPDATE USER BY ID
 // PUT /api/users/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   try {
     const updateData = { ...req.body };
     delete updateData.password;
@@ -214,7 +214,7 @@ router.put('/:id', async (req, res) => {
 
 // DELETE USER
 // DELETE /api/users/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 

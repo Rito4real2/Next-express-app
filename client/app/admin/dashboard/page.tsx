@@ -1,6 +1,8 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LogoutButton from './LogoutButton';
+import link from 'next/link';
+import Link from 'next/link';
 
 interface AdminDashboardData {
   stats: {
@@ -89,8 +91,12 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border shadow-sm p-6">
+        <div className="bg-white rounded-lg border shadow-sm p-6 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Recently Registered Users</h2>
+          <Link href="/users/manage" className="text-blue-600 hover:underline text-sm">
+            Manage Users
+          </Link>
+        </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -128,6 +134,5 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }

@@ -3,6 +3,8 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+// 1. Import ReceiptModal and Transaction type
+import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 
 export default function WithdrawPage() {
   const [amount, setAmount] = useState('');
@@ -17,6 +19,9 @@ export default function WithdrawPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // 2. State to hold the transaction for the modal
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
@@ -44,6 +49,7 @@ export default function WithdrawPage() {
     }
 
     try {
+      // NOTE: Ensure route endpoint is plural '/api/transactions/withdraw' to match server setup
       const res = await fetch(`${API_BASE_URL}/api/transaction/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,18 +65,29 @@ export default function WithdrawPage() {
       }
 
       setStatus(data.message || `Withdrawal request for $${amount} submitted! Pending processing.`);
+      
+      // 3. Store the created transaction response to trigger the receipt modal
+      if (data.transaction) {
+        setSelectedTransaction(data.transaction);
+      }
+
+      // Reset form state
       setAmount('');
       setBankName('');
       setAccountNumber('');
       setAccountHolderName('');
       setCryptoAddress('');
-      router.push('/users/profile');
       router.refresh();
     } catch (err) {
       setError('Unable to connect to backend server. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setSelectedTransaction(null);
+    router.push('/users/profile');
   };
 
   return (
@@ -175,6 +192,12 @@ export default function WithdrawPage() {
           </button>
         </form>
       </div>
+
+      {/* 4. Render ReceiptModal Component */}
+      <ReceiptModal 
+        transaction={selectedTransaction} 
+        onClose={handleCloseModal} 
+      />
     </div>
   );
 }

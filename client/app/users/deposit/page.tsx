@@ -20,7 +20,7 @@ export default function DepositPage() {
     setError(null);
 
     try {
-      const res = await fetch('/api/transactions/deposit', {
+      const res = await fetch('https://next-express-app-xi.vercel.app/api/transactions/deposit', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

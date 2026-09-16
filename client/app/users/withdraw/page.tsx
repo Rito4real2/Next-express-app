@@ -58,12 +58,13 @@ export default function WithdrawPage() {
         return;
       }
 
-      setStatus(data.message || `Withdrawal request for $${amount} submitted! Pending admin processing.`);
+      setStatus(data.message || `Withdrawal request for $${amount} submitted! Pending processing.`);
       setAmount('');
       setBankName('');
       setAccountNumber('');
       setAccountHolderName('');
       setCryptoAddress('');
+      router.push('/users/profile');
       router.refresh();
     } catch (err) {
       setError('Unable to connect to backend server. Please try again.');

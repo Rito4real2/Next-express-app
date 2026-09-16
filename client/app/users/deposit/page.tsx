@@ -22,13 +22,18 @@ export default function DepositPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/transactions/deposit`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ amount: Number(amount), paymentMethod }),
       });
+
+      // Safe parsing check
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await res.text();
+        console.error('Non-JSON response received:', text);
+        throw new Error(`Server returned ${res.status} status. Check backend route configuration.`);
+      }
 
       const data = await res.json();
 
@@ -37,14 +42,13 @@ export default function DepositPage() {
         return;
       }
 
-      setStatus(data.message || `Deposit request for $${amount} submitted! Pending admin approval.`);
+      setStatus(data.message || `Deposit request for $${amount} submitted!`);
       setAmount('');
-      router.refresh();
     } catch (err: any) {
-      console.error('Deposit Fetch Error:', err);
-      setError(err?.message || 'Unable to connect to backend server.');
+      setError(err.message || 'Unable to connect to backend server.');
     } finally {
       setLoading(false);
+      router.refresh();
     }
   };
 
@@ -95,4 +99,4 @@ export default function DepositPage() {
       </div>
     </div>
   );
-}
+  }

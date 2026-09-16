@@ -4,24 +4,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
-const { requireAdmin } = require('../middleware/auth');
-
-// Auth Middleware
-const requireAuth = async (req, res, next) => {
-  try {
-    const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ error: 'Not authenticated' });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(401).json({ error: 'User not found' });
-
-    req.user = user;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid or expired session' });
-  }
-};
+const { requireAdmin, requireAuth } = require('../middleware/auth');
 
 // --- USER TRANSACTION ROUTES ---
 

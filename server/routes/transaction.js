@@ -95,8 +95,8 @@ router.get('/all', requireAuth, requireAdmin, async (req, res) => {
 // 5. PATCH /api/transactions/:id/status (Admin approve/reject transaction)
 router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { status } = req.body; // 'approved' or 'rejected'
-    if (!['approved', 'rejected'].includes(status)) {
+    const { status } = req.body; // 'APPROVED' or 'REJECTED'
+    if (!['APPROVED', 'REJECTED'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 

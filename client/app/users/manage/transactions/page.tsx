@@ -14,10 +14,10 @@ interface UserRef {
 interface TransactionItem {
   _id: string;
   user: UserRef;
-  type: 'deposit' | 'withdrawal';
+  type: 'DEPOSIT' | 'WITHDRAWAL';
   amount: number;
   paymentMethod: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
 }
 
@@ -84,7 +84,7 @@ export default function AdminTransactionsPage() {
   }, [currentUser]);
 
   // Handle Approve or Reject
-  const handleStatusUpdate = async (id: string, newStatus: 'approved' | 'rejected') => {
+  const handleStatusUpdate = async (id: string, newStatus: 'APPROVED' | 'REJECTED') => {
     setActionMessage(null);
     try {
       const res = await fetch(`/api/transaction/${id}/status`, {
@@ -158,7 +158,7 @@ export default function AdminTransactionsPage() {
                   <td className="p-4 capitalize">
                     <span
                       className={`px-2 py-1 rounded text-xs font-bold ${
-                        tx.type === 'deposit' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                        tx.type === 'DEPOSIT' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
                       }`}
                     >
                       {tx.type}
@@ -169,9 +169,9 @@ export default function AdminTransactionsPage() {
                   <td className="p-4">
                     <span
                       className={`px-2 py-1 rounded text-xs font-bold capitalize ${
-                        tx.status === 'approved'
+                        tx.status === 'APPROVED'
                           ? 'bg-green-100 text-green-800'
-                          : tx.status === 'rejected'
+                          : tx.status === 'REJECTED'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}
@@ -180,16 +180,16 @@ export default function AdminTransactionsPage() {
                     </span>
                   </td>
                   <td className="p-4 space-x-2">
-                    {tx.status === 'pending' ? (
+                    {tx.status === 'PENDING' ? (
                       <>
                         <button
-                          onClick={() => handleStatusUpdate(tx._id, 'approved')}
+                          onClick={() => handleStatusUpdate(tx._id, 'APPROVED')}
                           className="px-3 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition"
                         >
                           Approve
                         </button>
                         <button
-                          onClick={() => handleStatusUpdate(tx._id, 'rejected')}
+                          onClick={() => handleStatusUpdate(tx._id, 'REJECTED')}
                           className="px-3 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 transition"
                         >
                           Reject

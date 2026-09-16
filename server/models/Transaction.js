@@ -17,7 +17,7 @@ const transactionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['PENDING', 'COMPLETED', 'FAILED'],
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
     default: 'PENDING'
   },
   // Payment method specified by the user

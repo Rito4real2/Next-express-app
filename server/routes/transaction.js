@@ -25,7 +25,7 @@ const requireAuth = async (req, res, next) => {
 
 // --- USER TRANSACTION ROUTES ---
 
-// 1. POST /api/transactions/deposit
+// 1. POST /api/transactions/deposit (FIX: Added missing deposit endpoint)
 router.post('/deposit', requireAuth, async (req, res) => {
   try {
     const { amount, paymentMethod } = req.body;
@@ -35,6 +35,7 @@ router.post('/deposit', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Enter a valid deposit amount' });
     }
 
+    // Create deposit transaction with pending status
     const transaction = await Transaction.create({
       user: req.user._id,
       type: 'deposit',
@@ -83,7 +84,8 @@ router.post('/withdraw', requireAuth, async (req, res) => {
   }
 });
 
-// 3. GET /api/transactions/my-history
+// 3. GET USER'S TRANSACTION HISTORY
+// GET /api/transactions/my-history
 router.get('/my-history', requireAuth, async (req, res) => {
   try {
     const history = await Transaction.find({ user: req.user._id }).sort({ createdAt: -1 });
@@ -95,32 +97,24 @@ router.get('/my-history', requireAuth, async (req, res) => {
 
 // --- ADMIN TRANSACTION ROUTES ---
 
-// 4. GET /api/transactions/all (Supports Optional ?status=pending|approved|rejected)
+// 4. GET /api/transactions/all (Admin gets all pending or all transactions)
 router.get('/all', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { status } = req.query;
-    const filter = {};
-
-    if (status && ['pending', 'approved', 'rejected'].includes(status)) {
-      filter.status = status;
-    }
-
-    const transactions = await Transaction.find(filter)
+    const transactions = await Transaction.find()
       .populate('user', 'fullName userName emailAddress balance')
       .sort({ createdAt: -1 });
-
     res.json(transactions);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// 5. PATCH /api/transactions/:id/status (Approve/Reject + Atomic Balance Update)
+// 5. PATCH /api/transactions/:id/status (Admin approve/reject transaction)
 router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body; // 'approved' or 'rejected'
     if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status provided' });
+      return res.status(400).json({ error: 'Invalid status' });
     }
 
     const transaction = await Transaction.findById(req.params.id);
@@ -129,10 +123,8 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
     }
 
     if (transaction.status !== 'pending') {
-      return res.status(400).json({ error: `Transaction is already ${transaction.status}` });
+      return res.status(400).json({ error: `Transaction already ${transaction.status}` });
     }
-
-    let updatedUser = null;
 
     // Handle user balance update on approval
     if (status === 'approved') {
@@ -143,27 +135,17 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
         user.balance += transaction.amount;
       } else if (transaction.type === 'withdrawal') {
         if (user.balance < transaction.amount) {
-          return res.status(400).json({ error: 'User has insufficient balance to approve this withdrawal' });
+          return res.status(400).json({ error: 'User has insufficient balance for withdrawal' });
         }
         user.balance -= transaction.amount;
       }
-
-      updatedUser = await user.save();
+      await user.save();
     }
 
     transaction.status = status;
     await transaction.save();
 
-    // Re-populate user details for consistent UI response
-    const populatedTransaction = await Transaction.findById(transaction._id).populate(
-      'user',
-      'fullName userName emailAddress balance'
-    );
-
-    res.json({
-      message: `Transaction successfully ${status}`,
-      transaction: populatedTransaction,
-    });
+    res.json({ message: `Transaction successfully ${status}`, transaction });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

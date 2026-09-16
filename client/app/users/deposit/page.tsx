@@ -1,7 +1,7 @@
-// client/src/app/users/deposit/page.tsx
 'use client';
 
-import { useState, FormEvent } from 'react';
+// Replace FormEvent with SubmitEvent
+import { useState, SubmitEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function DepositPage() {
@@ -12,15 +12,17 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  const handleDeposit = async (e: FormEvent) => {
+  // Type the form event with SubmitEvent<HTMLFormElement>
+  const handleDeposit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setStatus(null);
     setError(null);
 
     try {
-      const res = await fetch('/api/transactions/deposit', {
+      const res = await fetch(`${API_BASE_URL}/api/transactions/deposit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -30,15 +32,15 @@ export default function DepositPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to complete deposit');
+        setError(data.error || 'Failed to submit deposit request');
         return;
       }
 
-      setStatus(`Successfully deposited $${amount}! Your new balance is updated.`);
+      setStatus(data.message || `Deposit request for $${amount} submitted! Pending admin approval.`);
       setAmount('');
       router.refresh();
     } catch (err) {
-      setError('Server connection error. Please try again.');
+      setError('Unable to connect to backend server.');
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,7 @@ export default function DepositPage() {
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full p-2 border rounded mt-1 text-gray-800"
+              className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
             >
               <option value="Credit/Debit Card">Credit/Debit Card</option>
               <option value="Bank Transfer">Bank Transfer</option>
@@ -85,7 +87,7 @@ export default function DepositPage() {
             disabled={loading}
             className="w-full py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition disabled:opacity-50"
           >
-            {loading ? 'Processing...' : 'Deposit Funds'}
+            {loading ? 'Submitting...' : 'Submit Deposit Request'}
           </button>
         </form>
       </div>

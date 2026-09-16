@@ -1,11 +1,22 @@
 // client/src/components/Navbar.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Helper function to check if the user authentication cookie exists
+    const checkAuth = () => {
+      const hasToken = document.cookie.split('; ').some((item) => item.startsWith('token='));
+      setIsLoggedIn(hasToken);
+    };
+
+    checkAuth();
+  }, []);
 
   return (
     <header className="w-full flex justify-center p-4">
@@ -42,21 +53,35 @@ export default function Navbar() {
               Contact us
             </Link>
           </li>
-          <li>
-            <Link href="/users/register" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
-              Register
-            </Link>
-          </li>
-          <li>
-            <Link href="/users/login" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
-              Login
-            </Link>
-          </li>
-          <li>
-            <Link href="/users/settings" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
-              Settings
-            </Link>
-          </li>
+
+          {/* Conditional Navigation Links */}
+          {isLoggedIn ? (
+            <>
+              <li>
+                <Link href="/users/profile" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link href="/users/settings" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
+                  Settings
+                </Link>
+              </li>
+            </>
+          ) : (
+            <>
+              <li>
+                <Link href="/users/register" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
+                  Register
+                </Link>
+              </li>
+              <li>
+                <Link href="/users/login" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
+                  Login
+                </Link>
+              </li>
+            </>
+          )}
         </ul>
 
       </nav>

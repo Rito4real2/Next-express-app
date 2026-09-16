@@ -61,7 +61,7 @@ export default function AdminTransactionsPage() {
   const fetchTransactions = async () => {
     setLoadingTx(true);
     try {
-      const res = await fetch('/api/transactions/all', { credentials: 'include' });
+      const res = await fetch('/api/transaction/all', { credentials: 'include' });
       const data = await res.json();
 
       if (!res.ok) {
@@ -87,7 +87,7 @@ export default function AdminTransactionsPage() {
   const handleStatusUpdate = async (id: string, newStatus: 'approved' | 'rejected') => {
     setActionMessage(null);
     try {
-      const res = await fetch(`/api/transactions/${id}/status`, {
+      const res = await fetch(`/api/transaction/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

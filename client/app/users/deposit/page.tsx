@@ -11,7 +11,7 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const handleDeposit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,7 +20,7 @@ export default function DepositPage() {
     setError(null);
 
     try {
-      const res = await fetch('https://next-express-app-xi.vercel.app/api/transactions/deposit', {
+      const res = await fetch(`${API_BASE_URL}/api/transactions/deposit`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

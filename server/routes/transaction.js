@@ -8,7 +8,7 @@ const { requireAdmin, requireAuth } = require('../middleware/auth');
 
 // --- USER TRANSACTION ROUTES ---
 
-// 1. POST /api/transactions/deposit (FIX: Added missing deposit endpoint)
+// 1. POST /api/transaction/deposit (FIX: Added missing deposit endpoint)
 router.post('/deposit', requireAuth, async (req, res) => {
   try {
     const { amount, paymentMethod } = req.body;

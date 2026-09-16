@@ -23,7 +23,7 @@ export default function WithdrawPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/transactions/withdraw`, {
+      const res = await fetch(`${API_BASE_URL}/api/transaction/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // Ensures HTTP-only auth cookies are sent to Express
@@ -63,9 +63,9 @@ export default function WithdrawPage() {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
             >
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Crypto Wallet">Crypto Wallet</option>
-              <option value="PayPal">PayPal</option>
+              <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+              <option value="CRYPTO">CRYPTO_WALLET</option>
+              <option value="PAYPAL">PAYPAL</option>
             </select>
           </div>
 

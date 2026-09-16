@@ -74,7 +74,7 @@ router.post('/withdraw', requireAuth, async (req, res) => {
     });
 
     res.status(201).json({
-      message: 'Withdrawal request submitted and pending admin approval.',
+      message: 'Withdrawal request submitted and pending approval.',
       transaction,
     });
   } catch (err) {

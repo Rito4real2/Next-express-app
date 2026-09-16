@@ -11,7 +11,10 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+  // Ensure base URL has a valid protocol and no trailing slash
+  const RAW_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = RAW_URL.replace(/\/+$/, '');
 
   const handleDeposit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,8 +22,11 @@ export default function DepositPage() {
     setStatus(null);
     setError(null);
 
+    // Build absolute URL string explicitly
+    const targetUrl = `${API_BASE_URL}/api/transactions/deposit`;
+
     try {
-      const res = await fetch(`${API_BASE_URL}/api/transactions/deposit`, {
+      const res = await fetch(targetUrl, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -41,7 +47,7 @@ export default function DepositPage() {
       setAmount('');
       router.refresh();
     } catch (err: any) {
-      console.error('Deposit Fetch Error:', err);
+      console.error('Fetch error target:', targetUrl, err);
       setError(err?.message || 'Unable to connect to backend server.');
     } finally {
       setLoading(false);

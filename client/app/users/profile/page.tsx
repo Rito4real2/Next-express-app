@@ -2,7 +2,7 @@
 import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import ProfileForm from './ProfileForm';
+import Navbar from '@/components/Navbar';
 import UserLogoutButton from './UserLogoutButton';
 
 interface UserProfile {
@@ -16,6 +16,12 @@ interface UserProfile {
 }
 
 export const dynamic = 'force-dynamic';
+
+export function navBar() {
+  return (
+    <Navbar />
+  );
+}
 
 async function getUserProfile(): Promise<UserProfile | null> {
   try {
@@ -98,13 +104,7 @@ export default async function UserDashboard() {
             </p>
           </div>
         </div>
-
-        {/* Profile Settings Section */}
-        <div className="bg-white p-6 rounded-lg border shadow-sm">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Edit Profile Information</h2>
-          <ProfileForm user={user} />
-        </div>
-      </div>
+    </div>
     </div>
   );
 }

@@ -26,7 +26,6 @@ async function getDashboardData(): Promise<{ user: UserProfile; transactions: Tr
 
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-    // Fetch User Profile and Transactions concurrently
     const [profileRes, txRes] = await Promise.all([
       fetch(`${API_BASE_URL}/api/users/profile`, {
         headers: { Cookie: cookieHeader },
@@ -42,13 +41,25 @@ async function getDashboardData(): Promise<{ user: UserProfile; transactions: Tr
 
     const user = await profileRes.json();
     
-    // Unify transaction response parsing: handles raw arrays or wrapped object responses
-    let rawTransactions = [];
-    if (txRes.ok) {
-      const txData = await txRes.json();
-      rawTransactions = Array.isArray(txData)
-        ? txData
-        : txData.transactions || txData.data || [];
+    // DEBUG LOGS (Check your terminal running 'npm run dev')
+    console.log('Transaction Fetch Status:', txRes.status);
+    const txData = txRes.ok ? await txRes.json() : null;
+    console.log('Raw Transaction Data from Backend:', txData);
+
+    let rawTransactions: Transaction[] = [];
+
+    if (txData) {
+      if (Array.isArray(txData)) {
+        rawTransactions = txData;
+      } else if (typeof txData === 'object') {
+        // Unwraps nested properties common in Mongoose responses
+        rawTransactions = 
+          txData.transactions || 
+          txData.data || 
+          txData.docs || 
+          txData.history || 
+          [];
+      }
     }
 
     return { user, transactions: rawTransactions };

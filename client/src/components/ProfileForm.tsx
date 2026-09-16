@@ -155,7 +155,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
           disabled={loading}
           className="w-full py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition disabled:opacity-50"
         >
-          {loading ? 'Saving Changes...' : 'Save Profile'}
+          {loading ? 'Saving Changes...' : 'Save Settings'}
         </button>
       </form>
     </div>

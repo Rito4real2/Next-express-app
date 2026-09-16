@@ -95,7 +95,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             onChange={(e) => setFullName(e.target.value)}
             className="w-full p-2 border rounded mt-1 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="John Doe"
-            required
           />
         </div>
 
@@ -108,7 +107,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             onChange={(e) => setUserName(e.target.value)}
             className="w-full p-2 border rounded mt-1 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="johndoe"
-            required
           />
         </div>
 
@@ -121,7 +119,6 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
             onChange={(e) => setEmailAddress(e.target.value)}
             className="w-full p-2 border rounded mt-1 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="john@example.com"
-            required
           />
         </div>
 

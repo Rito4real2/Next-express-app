@@ -1,9 +1,11 @@
 // client/src/app/dashboard/page.tsx
-import { headers, cookies } from 'next/headers';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import UserLogoutButton from './UserLogoutButton';
+import ReceiptModal, {Transaction} from '@/components/ReceiptModal';
+import TransactionHistoryTable from '@/components/TransactionHistoryTable';
 
 interface UserProfile {
   _id: string;
@@ -17,40 +19,48 @@ interface UserProfile {
 
 export const dynamic = 'force-dynamic';
 
-async function getUserProfile(): Promise<UserProfile | null> {
+async function getDashboardData(): Promise<{ user: UserProfile; transactions: Transaction[] } | null> {
   try {
     const cookieStore = await cookies();
     const cookieHeader = cookieStore.toString();
 
-    // Point directly to your Express server URL
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    const apiUrl = `${API_BASE_URL}/api/users/profile`;
 
-    const res = await fetch(apiUrl, {
-      headers: { 
-        Cookie: cookieHeader 
-      },
-      cache: 'no-store',
-    });
+    // Fetch User Profile and Transactions concurrently
+    const [profileRes, txRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/api/users/profile`, {
+        headers: { Cookie: cookieHeader },
+        cache: 'no-store',
+      }),
+      fetch(`${API_BASE_URL}/api/transaction/my-transactions`, {
+        headers: { Cookie: cookieHeader },
+        cache: 'no-store',
+      }),
+    ]);
 
-    if (!res.ok) return null;
-    return res.json();
+    if (!profileRes.ok) return null;
+
+    const user = await profileRes.json();
+    const transactions = txRes.ok ? await txRes.json() : [];
+
+    return { user, transactions };
   } catch (error) {
-    console.error('Failed to fetch user profile during SSR:', error);
+    console.error('Failed to fetch dashboard data during SSR:', error);
     return null;
   }
 }
 
 export default async function UserDashboard() {
-  const user = await getUserProfile();
+  const data = await getDashboardData();
 
-  if (!user) {
+  if (!data) {
     redirect('/users/login');
   }
 
+  const { user, transactions } = data;
+
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* 1. Render Navbar directly at the top of the page */}
       <Navbar />
 
       <main className="p-6">
@@ -103,6 +113,20 @@ export default async function UserDashboard() {
               </p>
             </div>
           </div>
+
+          {/* Transaction History Section */}
+          <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-800">Transaction History</h2>
+              <span className="text-xs text-gray-500">
+                Total Logs: {transactions.length}
+              </span>
+            </div>
+
+            {/* Client Component handling table layout & Receipt Modal trigger */}
+            <TransactionHistoryTable transactions={transactions} />
+          </div>
+
         </div>
       </main>
     </div>

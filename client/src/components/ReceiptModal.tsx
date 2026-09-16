@@ -11,7 +11,7 @@ export interface Transaction {
   reference?: string;
   type: 'deposit' | 'withdrawal' | 'DEPOSIT' | 'WITHDRAWAL';
   amount: number;
-  status: 'pending' | 'approved' | 'rejected' | 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'pending' | 'approved' | 'rejected' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
   paymentMethod: string;
   bankDetails?: BankDetails;
   walletAddress?: string;
@@ -29,16 +29,21 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   const isDeposit = transaction.type.toUpperCase() === 'DEPOSIT';
   const statusUpper = transaction.status.toUpperCase();
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'APPROVED':
-        return 'bg-green-100 text-green-800 border-green-300';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800 border-red-300';
-      default:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-    }
-  };
+  const getStatusBadgeColor = (status: Transaction['status']) => {
+  switch (status) {
+    case 'APPROVED':
+    case 'approved':
+      return 'bg-green-100 text-green-800';
+    case 'PENDING':
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800';
+    case 'REJECTED':
+    case 'rejected':
+      return 'bg-red-100 text-red-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -81,8 +86,8 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
 
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Status</span>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadge(statusUpper)}`}>
-                {statusUpper}
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadgeColor(transaction.status)}`}>
+                {transaction.status.toUpperCase()}
               </span>
             </div>
 

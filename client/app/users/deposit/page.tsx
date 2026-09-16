@@ -44,6 +44,7 @@ export default function DepositPage() {
 
       setStatus(data.message || `Deposit request for $${amount} submitted!`);
       setAmount('');
+      router.push('/users/profile')
     } catch (err: any) {
       setError(err.message || 'Unable to connect to backend server.');
     } finally {

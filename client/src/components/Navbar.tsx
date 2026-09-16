@@ -79,7 +79,7 @@ export default function Navbar() {
               {isLoggedIn ? (
                 <>
                   <li>
-                    <Link href="/dashboard" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
+                    <Link href="/users/profile" className="flex items-center justify-center px-4 h-12 text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto">
                       Dashboard
                     </Link>
                   </li>

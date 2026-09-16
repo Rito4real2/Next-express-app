@@ -23,7 +23,7 @@ const transactionSchema = new mongoose.Schema({
   // Payment method specified by the user
   paymentMethod: {
     type: String,
-    enum: ['BANK_TRANSFER', 'CRYPTO'],
+    enum: ['BANK_TRANSFER', 'CRYPTO', 'CREDIT_DEBIT_CARD'],
     default: 'BANK_TRANSFER'
   },
   // Optional embedded schema for bank transfers

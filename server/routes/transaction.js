@@ -21,10 +21,10 @@ router.post('/deposit', requireAuth, async (req, res) => {
     // Create deposit transaction with pending status
     const transaction = await Transaction.create({
       user: req.user._id,
-      type: 'deposit',
+      type: 'DEPOSIT',
       amount: depositAmount,
-      status: 'pending',
-      paymentMethod: paymentMethod || 'Credit/Debit Card',
+      status: 'PENDING',
+      paymentMethod: paymentMethod || 'BANK TRANSFER',
     });
 
     res.status(201).json({
@@ -52,10 +52,10 @@ router.post('/withdraw', requireAuth, async (req, res) => {
 
     const transaction = await Transaction.create({
       user: req.user._id,
-      type: 'withdrawal',
+      type: 'WITHDRAWAL',
       amount: withdrawAmount,
-      status: 'pending',
-      paymentMethod: paymentMethod || 'Bank Transfer',
+      status: 'PENDING',
+      paymentMethod: paymentMethod || 'BANK TRANSFER',
     });
 
     res.status(201).json({
@@ -105,18 +105,18 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Transaction not found' });
     }
 
-    if (transaction.status !== 'pending') {
+    if (transaction.status !== 'PENDING') {
       return res.status(400).json({ error: `Transaction already ${transaction.status}` });
     }
 
     // Handle user balance update on approval
-    if (status === 'approved') {
+    if (status === 'APPROVED') {
       const user = await User.findById(transaction.user);
       if (!user) return res.status(404).json({ error: 'User for this transaction not found' });
 
-      if (transaction.type === 'deposit') {
+      if (transaction.type === 'DEPOSIT') {
         user.balance += transaction.amount;
-      } else if (transaction.type === 'withdrawal') {
+      } else if (transaction.type === 'WITHDRAWAL') {
         if (user.balance < transaction.amount) {
           return res.status(400).json({ error: 'User has insufficient balance for withdrawal' });
         }

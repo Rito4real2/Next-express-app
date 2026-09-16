@@ -68,9 +68,9 @@ export default function DepositPage() {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
             >
-              <option value="Credit/Debit Card">Credit/Debit Card</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Crypto Wallet">Crypto Wallet</option>
+              <option value="CREDIT_DEBIT_CARD">Credit/Debit Card</option>
+              <option value="BANK_TRANSFER">BANK_TRANSFER</option>
+              <option value="CRYPTO">CRYPTO</option>
             </select>
           </div>
 

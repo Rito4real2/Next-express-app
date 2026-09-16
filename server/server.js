@@ -15,12 +15,6 @@ const transactionRoute = require('./routes/transaction');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Dynamic CORS configuration for Vercel production & local dev
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://next-express-app-xi.vercel.app',
-];
-
 app.use(
   cors({
     origin: function (origin, callback) {

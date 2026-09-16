@@ -20,7 +20,7 @@ export default function DepositPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/transactions/deposit`, {
+      const res = await fetch(`${API_BASE_URL}/api/transaction/deposit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

@@ -1,17 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-// 1. Import BOTH ReceiptModal and Transaction from the same source
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 
 interface Props {
-  transactions: Transaction[];
+  transactions?: Transaction[];
 }
 
-export default function TransactionHistoryTable({ transactions }: Props) {
+export default function TransactionHistoryTable({ transactions = [] }: Props) {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
 
-  if (transactions.length === 0) {
+  // Safely check array length
+  if (!transactions || transactions.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500 border border-dashed rounded-lg">
         No transactions found yet.
@@ -41,8 +41,10 @@ export default function TransactionHistoryTable({ transactions }: Props) {
                     {tx.type}
                   </span>
                 </td>
-                <td className="p-3 font-bold">${tx.amount.toFixed(2)}</td>
-                <td className="p-3">{tx.paymentMethod}</td>
+                <td className="p-3 font-bold">
+                  ${typeof tx.amount === 'number' ? tx.amount.toFixed(2) : tx.amount}
+                </td>
+                <td className="p-3">{tx.paymentMethod || 'N/A'}</td>
                 <td className="p-3">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -57,7 +59,7 @@ export default function TransactionHistoryTable({ transactions }: Props) {
                   </span>
                 </td>
                 <td className="p-3 text-gray-500">
-                  {new Date(tx.createdAt).toLocaleDateString()}
+                  {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : 'N/A'}
                 </td>
                 <td className="p-3 text-right">
                   <button
@@ -73,7 +75,6 @@ export default function TransactionHistoryTable({ transactions }: Props) {
         </table>
       </div>
 
-      {/* View Receipt Popup */}
       <ReceiptModal transaction={selectedTx} onClose={() => setSelectedTx(null)} />
     </>
   );

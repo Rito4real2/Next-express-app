@@ -1,10 +1,10 @@
-// client/src/app/dashboard/page.tsx
+// client/src/app/users/profile/page.tsx
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import UserLogoutButton from './UserLogoutButton';
-import ReceiptModal, {Transaction} from '@/components/ReceiptModal';
+import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 import TransactionHistoryTable from '@/components/TransactionHistoryTable';
 
 interface UserProfile {
@@ -41,9 +41,17 @@ async function getDashboardData(): Promise<{ user: UserProfile; transactions: Tr
     if (!profileRes.ok) return null;
 
     const user = await profileRes.json();
-    const transactions = txRes.ok ? await txRes.json() : [];
+    
+    // Unify transaction response parsing: handles raw arrays or wrapped object responses
+    let rawTransactions = [];
+    if (txRes.ok) {
+      const txData = await txRes.json();
+      rawTransactions = Array.isArray(txData)
+        ? txData
+        : txData.transactions || txData.data || [];
+    }
 
-    return { user, transactions };
+    return { user, transactions: rawTransactions };
   } catch (error) {
     console.error('Failed to fetch dashboard data during SSR:', error);
     return null;

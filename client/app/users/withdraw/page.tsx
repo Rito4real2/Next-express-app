@@ -1,13 +1,19 @@
 // client/src/app/users/withdraw/page.tsx
 'use client';
 
-// Import SubmitEvent instead of deprecated FormEvent
-import { useState, SubmitEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function WithdrawPage() {
   const [amount, setAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('Bank Transfer');
+  const [paymentMethod, setPaymentMethod] = useState('BANK_TRANSFER');
+  
+  // Conditional form fields
+  const [bankName, setBankName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
+  const [walletAddress, setCryptoAddress] = useState('');
+
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -15,19 +21,34 @@ export default function WithdrawPage() {
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // Explicitly type the submit event as SubmitEvent<HTMLFormElement>
-  const handleWithdrawal = async (e: SubmitEvent<HTMLFormElement>) => {
+  const handleWithdrawal = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setStatus(null);
     setError(null);
 
+    // Build payload according to selected payment method
+    const payload: Record<string, any> = {
+      amount: Number(amount),
+      paymentMethod,
+    };
+
+    if (paymentMethod === 'BANK_TRANSFER') {
+      payload.bankDetails = {
+        bankName,
+        accountNumber,
+        accountHolderName,
+      };
+    } else if (paymentMethod === 'CRYPTO') {
+      payload.walletAddress = walletAddress;
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/transaction/withdraw`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Ensures HTTP-only auth cookies are sent to Express
-        body: JSON.stringify({ amount: Number(amount), paymentMethod }),
+        credentials: 'include',
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -39,6 +60,10 @@ export default function WithdrawPage() {
 
       setStatus(data.message || `Withdrawal request for $${amount} submitted! Pending admin processing.`);
       setAmount('');
+      setBankName('');
+      setAccountNumber('');
+      setAccountHolderName('');
+      setCryptoAddress('');
       router.refresh();
     } catch (err) {
       setError('Unable to connect to backend server. Please try again.');
@@ -63,9 +88,9 @@ export default function WithdrawPage() {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
             >
-              <option value="BANK_TRANSFER">BANK_TRANSFER</option>
-              <option value="CRYPTO">CRYPTO_WALLET</option>
-              <option value="PAYPAL">PAYPAL</option>
+              <option value="BANK_TRANSFER">Bank Transfer</option>
+              <option value="CRYPTO">Crypto Wallet</option>
+              <option value="PAYPAL">PayPal</option>
             </select>
           </div>
 
@@ -82,6 +107,63 @@ export default function WithdrawPage() {
               required
             />
           </div>
+
+          {/* Conditional Bank Details */}
+          {paymentMethod === 'BANK_TRANSFER' && (
+            <div className="space-y-3 pt-2 border-t">
+              <p className="text-xs font-semibold text-gray-500 uppercase">Bank Information</p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Bank Name</label>
+                <input
+                  type="text"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  placeholder="e.g. Chase Bank"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Account Number</label>
+                <input
+                  type="text"
+                  value={accountNumber}
+                  onChange={(e) => setAccountNumber(e.target.value)}
+                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  placeholder="0123456789"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Account Holder Name</label>
+                <input
+                  type="text"
+                  value={accountHolderName}
+                  onChange={(e) => setAccountHolderName(e.target.value)}
+                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  placeholder="John Doe"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Conditional Crypto Address */}
+          {paymentMethod === 'CRYPTO' && (
+            <div className="space-y-3 pt-2 border-t">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Crypto Wallet Address</label>
+                <input
+                  type="text"
+                  value={walletAddress}
+                  onChange={(e) => setCryptoAddress(e.target.value)}
+                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  placeholder="0x... or bc1..."
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

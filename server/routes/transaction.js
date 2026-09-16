@@ -37,9 +37,10 @@ router.post('/deposit', requireAuth, async (req, res) => {
 });
 
 // 2. POST /api/transactions/withdraw
+// POST /api/transactions/withdraw
 router.post('/withdraw', requireAuth, async (req, res) => {
   try {
-    const { amount, paymentMethod } = req.body;
+    const { amount, paymentMethod, bankDetails, walletAddress } = req.body;
     const withdrawAmount = Number(amount);
 
     if (!withdrawAmount || withdrawAmount <= 0) {
@@ -50,12 +51,26 @@ router.post('/withdraw', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Insufficient account balance' });
     }
 
+    // Validation for BANK_TRANSFER
+    if (paymentMethod === 'BANK_TRANSFER') {
+      if (!bankDetails?.bankName || !bankDetails?.accountNumber || !bankDetails?.accountHolderName) {
+        return res.status(400).json({ error: 'Please provide complete bank details' });
+      }
+    }
+
+    // Validation for CRYPTO
+    if (paymentMethod === 'CRYPTO' && !walletAddress) {
+      return res.status(400).json({ error: 'Please provide a crypto wallet address' });
+    }
+
     const transaction = await Transaction.create({
       user: req.user._id,
       type: 'WITHDRAWAL',
       amount: withdrawAmount,
       status: 'PENDING',
-      paymentMethod: paymentMethod || 'BANK TRANSFER',
+      paymentMethod: paymentMethod || 'BANK_TRANSFER',
+      bankDetails: paymentMethod === 'BANK_TRANSFER' ? bankDetails : undefined,
+      walletAddress: paymentMethod === 'CRYPTO' ? walletAddress : undefined,
     });
 
     res.status(201).json({

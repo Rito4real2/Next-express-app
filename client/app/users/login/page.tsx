@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
 export default function UserLoginPage() {
@@ -44,6 +45,7 @@ export default function UserLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <Navbar />
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Sign In to Your Account</h1>

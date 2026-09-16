@@ -90,8 +90,8 @@ export default function DepositPage() {
               className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
             >
               <option value="Credit/Debit Card">Credit / Debit Card</option>
-              <option value="Bank Wire">Bank Wire</option>
-              <option value="Crypto (USDT)">Crypto (USDT)</option>
+              <option value="BANK_TRANSFER">Bank Transfer</option>
+              <option value="CRYPTO">Crypto (USDT)</option>
             </select>
           </div>
 

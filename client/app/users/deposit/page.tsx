@@ -1,6 +1,5 @@
 'use client';
 
-// Replace FormEvent with SubmitEvent
 import { useState, SubmitEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -14,7 +13,6 @@ export default function DepositPage() {
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  // Type the form event with SubmitEvent<HTMLFormElement>
   const handleDeposit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -24,7 +22,10 @@ export default function DepositPage() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/transactions/deposit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         credentials: 'include',
         body: JSON.stringify({ amount: Number(amount), paymentMethod }),
       });
@@ -39,8 +40,9 @@ export default function DepositPage() {
       setStatus(data.message || `Deposit request for $${amount} submitted! Pending admin approval.`);
       setAmount('');
       router.refresh();
-    } catch (err) {
-      setError('Unable to connect to backend server.');
+    } catch (err: any) {
+      console.error('Deposit Fetch Error:', err);
+      setError(err?.message || 'Unable to connect to backend server.');
     } finally {
       setLoading(false);
     }

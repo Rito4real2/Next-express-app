@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface BankDetails {
   bankName?: string;
   accountNumber?: string;
@@ -30,6 +32,14 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   const statusUpper = transaction.status.toUpperCase();
   const isCrypto = transaction.paymentMethod.toLowerCase() === 'crypto' || transaction.paymentMethod.toLowerCase() === 'cryptocurrency';
   const isBankTransfer = transaction.paymentMethod.toLowerCase() === 'bank_transfer' || transaction.paymentMethod.toLowerCase() === 'bank';
+
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (address: string) => {
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const getStatusBadgeColor = (status: Transaction['status']) => {
   switch (status) {
@@ -98,11 +108,22 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
               <span className="font-medium text-gray-800">{transaction.paymentMethod}</span>
             </div>
             {isCrypto && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Wallet Address</span>
-                <span className="font-medium text-gray-800">136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6</span>
+            <div className="flex justify-between items-center gap-4 py-2">
+              <span className="text-gray-500 text-sm">Wallet Address</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
+                  136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy('136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6')}
+                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
+                >
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
               </div>
-            )}
+            </div>
+          )}
 
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Date & Time</span>

@@ -97,6 +97,11 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
             </div>
 
             <div className="flex justify-between items-center">
+              <span className="text-gray-500">Payment Address</span>
+              <span className="font-medium text-gray-800">136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6</span>
+            </div>
+
+            <div className="flex justify-between items-center">
               <span className="text-gray-500">Date & Time</span>
               <span className="font-medium text-gray-800">
                 {new Date(transaction.createdAt).toLocaleString()}

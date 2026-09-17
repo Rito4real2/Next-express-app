@@ -31,7 +31,7 @@ async function getDashboardData(): Promise<{ user: UserProfile; transactions: Tr
         headers: { Cookie: cookieHeader },
         cache: 'no-store',
       }),
-      fetch(`${API_BASE_URL}/api/transaction/my-transactions`, {
+      fetch(`${API_BASE_URL}/api/transaction/my-history`, {
         headers: { Cookie: cookieHeader },
         cache: 'no-store',
       }),

@@ -29,17 +29,23 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   if (!transaction) return null;
 
   const isDeposit = transaction.type.toUpperCase() === 'DEPOSIT';
-  const statusUpper = transaction.status.toUpperCase();
   const isCrypto = transaction.paymentMethod.toLowerCase() === 'crypto' || transaction.paymentMethod.toLowerCase() === 'cryptocurrency';
   const isBankTransfer = transaction.paymentMethod.toLowerCase() === 'bank_transfer' || transaction.paymentMethod.toLowerCase() === 'bank';
 
   const [copied, setCopied] = useState(false);
+  const [copiedAcc, setCopiedAcc] = useState(false);
 
   const handleCopy = (address: string) => {
     navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleCopyAccount = (accountNumber: string) => {
+  navigator.clipboard.writeText(accountNumber);
+  setCopiedAcc(true);
+  setTimeout(() => setCopiedAcc(false), 2000);
+};
 
   const getStatusBadgeColor = (status: Transaction['status']) => {
   switch (status) {
@@ -124,6 +130,34 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
               </div>
             </div>
           )}
+
+          {isBankTransfer && (
+  <>
+    <div className="flex justify-between items-center gap-4 py-2">
+      <span className="text-gray-500 text-sm">Account Holder</span>
+      <span className="font-medium text-gray-800">Righteous Laikpo</span>
+    </div>
+    <div className="flex justify-between items-center gap-4 py-2">
+      <span className="text-gray-500 text-sm">Bank Name</span>
+      <span className="font-medium text-gray-800">Opay Bank</span>
+    </div>
+    <div className="flex justify-between items-center gap-4 py-2">
+      <span className="text-gray-500 text-sm">Account Number</span>
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
+          9123456789
+        </span>
+        <button
+          type="button"
+          onClick={() => handleCopyAccount('9123456789')}
+          className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
+        >
+          {copiedAcc ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+    </div>
+  </>
+)}
 
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Date & Time</span>

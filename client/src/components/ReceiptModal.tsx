@@ -114,7 +114,7 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
               <span className="font-medium text-gray-800">{transaction.paymentMethod}</span>
             </div>
             
-            {isCrypto && (
+            {isCrypto && transaction?.type === 'DEPOSIT' && (
             <div className="flex justify-between items-center gap-4 py-2">
               <span className="text-gray-500 text-sm">Wallet Address</span>
               <div className="flex items-center gap-2">
@@ -132,33 +132,33 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
             </div>
           )}
 
-          {isBankTransfer && (
-            <>
-              <div className="flex justify-between items-center gap-4 py-2">
-                <span className="text-gray-500 text-sm">Account Holder</span>
-                <span className="font-medium text-gray-800">Righteous Laikpo</span>
-              </div>
-              <div className="flex justify-between items-center gap-4 py-2">
-                <span className="text-gray-500 text-sm">Bank Name</span>
-                <span className="font-medium text-gray-800">Opay Bank</span>
-              </div>
-              <div className="flex justify-between items-center gap-4 py-2">
-                <span className="text-gray-500 text-sm">Account Number</span>
+          {isBankTransfer && transaction?.type === 'DEPOSIT' && (
+          <>
+            <div className="flex justify-between items-center gap-4 py-2">
+              <span className="text-gray-500 text-sm">Account Holder</span>
+              <span className="font-medium text-gray-800">Righteous Laikpo</span>
+            </div>
+            <div className="flex justify-between items-center gap-4 py-2">
+              <span className="text-gray-500 text-sm">Bank Name</span>
+              <span className="font-medium text-gray-800">Opay Bank</span>
+            </div>
+            <div className="flex justify-between items-center gap-4 py-2">
+              <span className="text-gray-500 text-sm">Account Number</span>
               <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
-                    9123456789
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyAccount('9123456789')}
-                    className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
-                  >
-                    {copiedAcc ? 'Copied!' : 'Copy'}
-                  </button>
+                <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
+                  9123456789
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopyAccount('9123456789')}
+                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
+                >
+                  {copiedAcc ? 'Copied!' : 'Copy'}
+                </button>
               </div>
-              </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
 
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Date & Time</span>

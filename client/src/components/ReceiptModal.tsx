@@ -136,11 +136,11 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
           <>
             <div className="flex justify-between items-center gap-4 py-2">
               <span className="text-gray-500 text-sm">Account Holder</span>
-              <span className="font-medium text-gray-800">Righteous Laikpo</span>
+              <span className="font-medium text-gray-800">Investment Global</span>
             </div>
             <div className="flex justify-between items-center gap-4 py-2">
               <span className="text-gray-500 text-sm">Bank Name</span>
-              <span className="font-medium text-gray-800">Opay Bank</span>
+              <span className="font-medium text-gray-800">Global Investment Bank</span>
             </div>
             <div className="flex justify-between items-center gap-4 py-2">
               <span className="text-gray-500 text-sm">Account Number</span>

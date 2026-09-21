@@ -302,7 +302,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                   <div className="space-y-3">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp"
                       onChange={handleFileChange}
                       className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border rounded-md p-1"
                     />

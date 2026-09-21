@@ -1,10 +1,10 @@
-import mongoose from 'mongoose';
+const mongoose = require( 'mongoose');
 
 const paymentSettingSchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ['bank', 'crypto'],
+      enum: ['bank_transfer', 'crypto', 'BANK_TRANSFER', 'CRYPTO', 'BTC', 'USDT', 'ETH', 'TRX'],
       required: true,
       unique: true,
     },
@@ -22,5 +22,4 @@ const paymentSettingSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.PaymentSetting ||
-  mongoose.model('PaymentSetting', paymentSettingSchema);
+module.exports = mongoose.model('PaymentSetting', paymentSettingSchema);

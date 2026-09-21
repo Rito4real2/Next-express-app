@@ -4,7 +4,59 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
+const PaymentSetting = require('../models/PaymentSetting');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
+
+// --- PAYMENT SETTINGS ROUTES (ADMIN & USER) ---
+
+// GET Route to fetch settings by payment type
+router.get('/payment-settings', requireAuth, async (req, res) => {
+  try {
+    const { type = 'BANK_TRANSFER' } = req.query;
+    const settings = await PaymentSetting.findOne({ type });
+
+    res.status(200).json({ settings: settings || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create or update admin payment details (Admin Only)
+router.post('/payment-settings', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const {
+      type = 'BANK_TRANSFER',
+      bankName,
+      accountNumber,
+      accountHolderName,
+      walletAddress,
+      network,
+      isActive,
+    } = req.body;
+
+    // Upsert by matching 'type'
+    const settings = await PaymentSetting.findOneAndUpdate(
+      { type },
+      {
+        type,
+        bankName,
+        accountNumber,
+        accountHolderName,
+        walletAddress,
+        network,
+        isActive: isActive !== undefined ? isActive : true,
+      },
+      { new: true, upsert: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      message: `${type} payment settings updated successfully`,
+      settings,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- USER TRANSACTION ROUTES ---
 

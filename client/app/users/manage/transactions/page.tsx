@@ -1,8 +1,21 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
+import { useState, useEffect, useCallback } from 'react';
 
-import { useState } from 'react';
+interface TransactionUser {
+  fullName?: string;
+  emailAddress?: string;
+}
+
+interface Transaction {
+  _id: string;
+  user?: TransactionUser;
+  type: string;
+  amount: number | string;
+  paymentMethod?: string;
+  proofOfPayment?: string;
+  status: string;
+}
 
 // Simple Image Modal Component for Admin Preview
 function ProofModal({ imageUrl, onClose }: { imageUrl: string; onClose: () => void }) {
@@ -34,8 +47,80 @@ function ProofModal({ imageUrl, onClose }: { imageUrl: string; onClose: () => vo
   );
 }
 
-export default function AdminDashboard({ transactions = [], error, actionMessage, handleStatusUpdate }: any) {
+export default function AdminDashboard() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [activeProofUrl, setActiveProofUrl] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Fetch transactions from Express backend
+  const fetchTransactions = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/transaction/all`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Ensure cookies are sent if your backend uses them for auth
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: Failed to load transactions`);
+      }
+
+      const data = await response.json();
+      // Adjust if Express returns data wrapped in a key like { transactions: [...] } or { data: [...] }
+      setTransactions(Array.isArray(data) ? data : data.transactions || data.data || []);
+    } catch (err: any) {
+      setError(err.message || 'Unable to fetch transaction requests.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  // Handle Approve / Reject actions
+  const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    setUpdatingId(id);
+    setActionMessage(null);
+    setError(null);
+
+     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/transaction/${id}/status`, {
+        method: 'PATCH', // Change to 'PUT' if your Express route expects PUT
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ensure cookies are sent if your backend uses them for auth
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to update status to ${status}`);
+      }
+
+      setActionMessage(`Transaction successfully ${status.toLowerCase()}.`);
+
+      // Optimistic state update so UI updates immediately
+      setTransactions((prev) =>
+        prev.map((tx) => (tx._id === id ? { ...tx, status } : tx))
+      );
+    } catch (err: any) {
+      setError(err.message || 'Status update failed.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-8">
@@ -70,86 +155,95 @@ export default function AdminDashboard({ transactions = [], error, actionMessage
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-sm text-gray-800">
-                {transactions.map((tx: any) => (
-                  <tr key={tx._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4">
-                      <p className="font-semibold text-gray-900 truncate max-w-[200px]">
-                        {tx.user?.fullName || 'Unknown User'}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate max-w-[200px]">
-                        {tx.user?.emailAddress}
-                      </p>
-                    </td>
-                    <td className="p-4 capitalize">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-bold ${
-                          tx.type === 'DEPOSIT' || tx.type === 'deposit'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-orange-100 text-orange-800'
-                        }`}
-                      >
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className="p-4 font-medium whitespace-nowrap">
-                      ${typeof tx.amount === 'number' ? tx.amount.toFixed(2) : tx.amount}
-                    </td>
-                    <td className="p-4 whitespace-nowrap">{tx.paymentMethod || 'N/A'}</td>
-
-                    {/* Receipt Column */}
-                    <td className="p-4 whitespace-nowrap">
-                      {tx.proofOfPayment ? (
-                        <button
-                          type="button"
-                          onClick={() => setActiveProofUrl(tx.proofOfPayment)}
-                          className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition inline-flex items-center gap-1"
-                        >
-                          🔍 View Proof
-                        </button>
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">No proof</span>
-                      )}
-                    </td>
-
-                    <td className="p-4">
-                      <span
-                        className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${
-                          tx.status === 'APPROVED' || tx.status === 'approved'
-                            ? 'bg-green-100 text-green-800'
-                            : tx.status === 'REJECTED' || tx.status === 'rejected'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        {tx.status}
-                      </span>
-                    </td>
-
-                    <td className="p-4 whitespace-nowrap text-right sm:text-left">
-                      {tx.status === 'PENDING' || tx.status === 'pending' ? (
-                        <div className="flex items-center justify-end sm:justify-start gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleStatusUpdate(tx._id, 'APPROVED')}
-                            className="px-3 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 active:bg-green-800 transition shadow-sm"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleStatusUpdate(tx._id, 'REJECTED')}
-                            className="px-3 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 active:bg-red-800 transition shadow-sm"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400 font-medium">Completed</span>
-                      )}
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-gray-500">
+                      Loading transactions...
                     </td>
                   </tr>
-                ))}
-                {transactions.length === 0 && (
+                ) : transactions.length > 0 ? (
+                  transactions.map((tx) => (
+                    <tr key={tx._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4">
+                        <p className="font-semibold text-gray-900 truncate max-w-[200px]">
+                          {tx.user?.fullName || 'Unknown User'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                          {tx.user?.emailAddress}
+                        </p>
+                      </td>
+                      <td className="p-4 capitalize">
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-bold ${
+                            tx.type?.toUpperCase() === 'DEPOSIT'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}
+                        >
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="p-4 font-medium whitespace-nowrap">
+                        ${typeof tx.amount === 'number' ? tx.amount.toFixed(2) : tx.amount}
+                      </td>
+                      <td className="p-4 whitespace-nowrap">{tx.paymentMethod || 'N/A'}</td>
+
+                      {/* Receipt Column */}
+                      <td className="p-4 whitespace-nowrap">
+                        {tx.proofOfPayment ? (
+                          <button
+                            type="button"
+                            onClick={() => setActiveProofUrl(tx.proofOfPayment!)}
+                            className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition inline-flex items-center gap-1"
+                          >
+                            🔍 View Proof
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No proof</span>
+                        )}
+                      </td>
+
+                      <td className="p-4">
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${
+                            tx.status?.toUpperCase() === 'APPROVED'
+                              ? 'bg-green-100 text-green-800'
+                              : tx.status?.toUpperCase() === 'REJECTED'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {tx.status}
+                        </span>
+                      </td>
+
+                      <td className="p-4 whitespace-nowrap text-right sm:text-left">
+                        {tx.status?.toUpperCase() === 'PENDING' ? (
+                          <div className="flex items-center justify-end sm:justify-start gap-2">
+                            <button
+                              type="button"
+                              disabled={updatingId === tx._id}
+                              onClick={() => handleStatusUpdate(tx._id, 'APPROVED')}
+                              className="px-3 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 active:bg-green-800 transition shadow-sm disabled:opacity-50"
+                            >
+                              {updatingId === tx._id ? 'Updating...' : 'Approve'}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={updatingId === tx._id}
+                              onClick={() => handleStatusUpdate(tx._id, 'REJECTED')}
+                              className="px-3 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 active:bg-red-800 transition shadow-sm disabled:opacity-50"
+                            >
+                              {updatingId === tx._id ? 'Updating...' : 'Reject'}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 font-medium">Completed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-gray-500">
                       No transactions found.

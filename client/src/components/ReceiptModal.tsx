@@ -138,6 +138,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Ensure cookies are sent if your backend uses them for auth
         body: JSON.stringify({ proofOfPayment: base64Image }),
       });
 

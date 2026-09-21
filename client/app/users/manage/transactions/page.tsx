@@ -32,7 +32,7 @@ function ProofModal({ imageUrl, onClose }: { imageUrl: string; onClose: () => vo
   );
 }
 
-export default function AdminDashboard({ transactions, error, actionMessage, handleStatusUpdate }: any) {
+export default function AdminDashboard({ transactions = [], error, actionMessage, handleStatusUpdate }: any) {
   const [activeProofUrl, setActiveProofUrl] = useState<string | null>(null);
 
   return (

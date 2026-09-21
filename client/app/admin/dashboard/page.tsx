@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LogoutButton from './LogoutButton';
-import Link from 'next/link';
+import AdminNavbar from '@/components/AdminNavbar'
 
 interface AdminDashboardData {
   stats: {
@@ -64,6 +64,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
+      <AdminNavbar/>
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between border-b pb-4">
           <div>
@@ -92,17 +93,6 @@ export default async function AdminDashboardPage() {
 
         <div className="bg-white rounded-lg border shadow-sm p-6 flex justify-between items-center">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Recently Registered Users</h2>
-          <button>
-            <Link href="/users/manage" className="text-blue-600 hover:underline text-sm">
-              Manage Users
-            </Link>
-          </button>
-
-          <button>
-            <Link href="/users/manage/transactions" className="text-blue-600 hover:underline text-sm">
-              Manage Transactions
-            </Link>
-          </button>
         </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">

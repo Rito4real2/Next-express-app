@@ -129,89 +129,112 @@ export default function AdminTransactionsPage() {
   if (loadingTx) return <div className="p-8 text-center text-gray-700">Loading transactions...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard - Transaction Requests</h1>
+      <div className="min-h-screen bg-gray-100 p-4 sm:p-6 md:p-8">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+            Admin Dashboard - Transaction Requests
+          </h1>
 
-        {error && <div className="p-4 bg-red-100 border border-red-300 text-red-800 rounded">{error}</div>}
-        {actionMessage && <div className="p-4 bg-green-100 border border-green-300 text-green-800 rounded">{actionMessage}</div>}
+          {error && (
+            <div className="p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg text-sm sm:text-base">
+              {error}
+            </div>
+          )}
+          {actionMessage && (
+            <div className="p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg text-sm sm:text-base">
+              {actionMessage}
+            </div>
+          )}
 
-        <div className="bg-white rounded-lg shadow border overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b text-xs font-semibold text-gray-600 uppercase">
-                <th className="p-4">User</th>
-                <th className="p-4">Type</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Method</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-sm text-gray-800">
-              {transactions.map((tx) => (
-                <tr key={tx._id} className="hover:bg-gray-50">
-                  <td className="p-4">
-                    <p className="font-semibold">{tx.user?.fullName || 'Unknown User'}</p>
-                    <p className="text-xs text-gray-500">{tx.user?.emailAddress}</p>
-                  </td>
-                  <td className="p-4 capitalize">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-bold ${
-                        tx.type === 'DEPOSIT' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
-                      }`}
-                    >
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td className="p-4 font-medium">${tx.amount.toFixed(2)}</td>
-                  <td className="p-4">{tx.paymentMethod}</td>
-                  <td className="p-4">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-bold capitalize ${
-                        tx.status === 'APPROVED'
-                          ? 'bg-green-100 text-green-800'
-                          : tx.status === 'REJECTED'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {tx.status}
-                    </span>
-                  </td>
-                  <td className="p-4 space-x-2">
-                    {tx.status === 'PENDING' ? (
-                      <>
-                        <button
-                          onClick={() => handleStatusUpdate(tx._id, 'APPROVED')}
-                          className="px-3 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 transition"
+          {/* Responsive Outer Card & Horizontal Scroll Container */}
+          <div className="bg-white rounded-lg shadow border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[650px]">
+                <thead>
+                  <tr className="bg-gray-50 border-b text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <th className="p-4 min-w-[180px]">User</th>
+                    <th className="p-4 min-w-[100px]">Type</th>
+                    <th className="p-4 min-w-[100px]">Amount</th>
+                    <th className="p-4 min-w-[120px]">Method</th>
+                    <th className="p-4 min-w-[100px]">Status</th>
+                    <th className="p-4 min-w-[160px] text-right sm:text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 text-sm text-gray-800">
+                  {transactions.map((tx) => (
+                    <tr key={tx._id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4">
+                        <p className="font-semibold text-gray-900 truncate max-w-[200px]">
+                          {tx.user?.fullName || 'Unknown User'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate max-w-[200px]">
+                          {tx.user?.emailAddress}
+                        </p>
+                      </td>
+                      <td className="p-4 capitalize">
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-bold ${
+                            tx.type === 'DEPOSIT'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }`}
                         >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleStatusUpdate(tx._id, 'REJECTED')}
-                          className="px-3 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 transition"
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="p-4 font-medium whitespace-nowrap">
+                        ${typeof tx.amount === 'number' ? tx.amount.toFixed(2) : tx.amount}
+                      </td>
+                      <td className="p-4 whitespace-nowrap">{tx.paymentMethod || 'N/A'}</td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${
+                            tx.status === 'APPROVED'
+                              ? 'bg-green-100 text-green-800'
+                              : tx.status === 'REJECTED'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
                         >
-                          Reject
-                        </button>
-                      </>
-                    ) : (
-                      <span className="text-xs text-gray-400">Completed</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {transactions.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-6 text-center text-gray-500">
-                    No transactions found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                          {tx.status}
+                        </span>
+                      </td>
+                      <td className="p-4 whitespace-nowrap text-right sm:text-left">
+                        {tx.status === 'PENDING' ? (
+                          <div className="flex items-center justify-end sm:justify-start gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleStatusUpdate(tx._id, 'APPROVED')}
+                              className="px-3 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 active:bg-green-800 transition shadow-sm"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleStatusUpdate(tx._id, 'REJECTED')}
+                              className="px-3 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 active:bg-red-800 transition shadow-sm"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 font-medium">Completed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {transactions.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="p-8 text-center text-gray-500">
+                        No transactions found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
   );
 }

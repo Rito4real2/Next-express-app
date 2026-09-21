@@ -254,7 +254,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
                 {/* Show Image Preview if Uploaded or Provided */}
                 {(previewUrl || transaction.proofOfPayment) ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="relative rounded-lg border overflow-hidden bg-gray-50">
                       <img
                         src={previewUrl || transaction.proofOfPayment}
@@ -262,6 +262,20 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                         className="w-full max-h-48 object-contain py-2"
                       />
                     </div>
+
+                    {/* Submit button for newly selected local image */}
+                    {selectedFile && !uploadSuccess && (
+                      <button
+                        type="button"
+                        onClick={handleUploadProof}
+                        disabled={uploading}
+                        className="w-full py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
+                      >
+                        {uploading ? 'Uploading Receipt...' : 'Submit Proof of Payment'}
+                      </button>
+                    )}
+
+                    {/* Button to change or clear the image */}
                     {isPending && !uploadSuccess && (
                       <button
                         type="button"
@@ -269,7 +283,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                           setPreviewUrl(null);
                           setSelectedFile(null);
                         }}
-                        className="text-xs text-red-600 hover:underline"
+                        className="text-xs text-red-600 hover:underline block"
                       >
                         Change receipt image
                       </button>
@@ -284,16 +298,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                       onChange={handleFileChange}
                       className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border rounded-md p-1"
                     />
-                    {selectedFile && (
-                      <button
-                        type="button"
-                        onClick={handleUploadProof}
-                        disabled={uploading}
-                        className="w-full py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
-                      >
-                        {uploading ? 'Uploading Receipt...' : 'Submit Proof of Payment'}
-                      </button>
-                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-gray-400 italic">No receipt attached.</p>

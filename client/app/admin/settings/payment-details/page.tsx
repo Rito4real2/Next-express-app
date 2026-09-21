@@ -40,6 +40,22 @@ export default function AdminPaymentSettingsForm() {
 
   const isBank = selectedType === 'BANK_TRANSFER';
 
+  // Helper function to paste clipboard text directly into a specific input field
+  const handlePaste = async (fieldName: keyof PaymentSettings) => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setFormData((prev) => ({ ...prev, [fieldName]: text.trim() }));
+      }
+    } catch (err) {
+      console.error('Failed to read clipboard contents: ', err);
+      setStatusMessage({
+        type: 'error',
+        text: 'Clipboard access denied or unsupported by your browser.',
+      });
+    }
+  };
+
   // Fetch current payment settings when selectedType changes
   const fetchSettings = useCallback(async (typeToFetch: PaymentType) => {
     setIsLoading(true);
@@ -214,30 +230,34 @@ export default function AdminPaymentSettingsForm() {
                   <label htmlFor="bankName" className="block text-xs font-semibold text-gray-600 mb-1">
                     Bank Name
                   </label>
-                  <input
-                    type="text"
-                    id="bankName"
-                    name="bankName"
-                    value={formData.bankName}
-                    onChange={handleChange}
-                    placeholder="e.g. Chase Bank"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      id="bankName"
+                      name="bankName"
+                      value={formData.bankName}
+                      onChange={handleChange}
+                      placeholder="e.g. Chase Bank"
+                      className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label htmlFor="accountHolderName" className="block text-xs font-semibold text-gray-600 mb-1">
                     Account Holder Name
                   </label>
-                  <input
-                    type="text"
-                    id="accountHolderName"
-                    name="accountHolderName"
-                    value={formData.accountHolderName}
-                    onChange={handleChange}
-                    placeholder="e.g. Acme Corp LLC"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      id="accountHolderName"
+                      name="accountHolderName"
+                      value={formData.accountHolderName}
+                      onChange={handleChange}
+                      placeholder="e.g. Acme Corp LLC"
+                      className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -245,15 +265,24 @@ export default function AdminPaymentSettingsForm() {
                 <label htmlFor="accountNumber" className="block text-xs font-semibold text-gray-600 mb-1">
                   Account / IBAN Number
                 </label>
-                <input
-                  type="text"
-                  id="accountNumber"
-                  name="accountNumber"
-                  value={formData.accountNumber}
-                  onChange={handleChange}
-                  placeholder="e.g. 1234567890"
-                  className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    id="accountNumber"
+                    name="accountNumber"
+                    value={formData.accountNumber}
+                    onChange={handleChange}
+                    placeholder="e.g. 1234567890"
+                    className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handlePaste('accountNumber')}
+                    className="absolute right-1.5 px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition cursor-pointer"
+                  >
+                    Paste
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -267,30 +296,41 @@ export default function AdminPaymentSettingsForm() {
                   <label htmlFor="walletAddress" className="block text-xs font-semibold text-gray-600 mb-1">
                     Wallet Address
                   </label>
-                  <input
-                    type="text"
-                    id="walletAddress"
-                    name="walletAddress"
-                    value={formData.walletAddress}
-                    onChange={handleChange}
-                    placeholder="e.g. 0x1234...abcd or T..."
-                    className="w-full px-3 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      id="walletAddress"
+                      name="walletAddress"
+                      value={formData.walletAddress}
+                      onChange={handleChange}
+                      placeholder="e.g. 0x1234...abcd or T..."
+                      className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handlePaste('walletAddress')}
+                      className="absolute right-1.5 px-2.5 py-1 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition cursor-pointer"
+                    >
+                      Paste
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label htmlFor="network" className="block text-xs font-semibold text-gray-600 mb-1">
                     Network
                   </label>
-                  <input
-                    type="text"
-                    id="network"
-                    name="network"
-                    value={formData.network}
-                    onChange={handleChange}
-                    placeholder="e.g. TRC20, ERC20, BTC"
-                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      id="network"
+                      name="network"
+                      value={formData.network}
+                      onChange={handleChange}
+                      placeholder="e.g. TRC20, ERC20, BTC"
+                      className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -301,7 +341,7 @@ export default function AdminPaymentSettingsForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-700 active:bg-blue-800 transition disabled:opacity-50 shadow-sm"
+              className="px-6 py-2.5 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-700 active:bg-blue-800 transition disabled:opacity-50 shadow-sm cursor-pointer"
             >
               {isSubmitting ? 'Saving Changes...' : `Save ${selectedType} Settings`}
             </button>

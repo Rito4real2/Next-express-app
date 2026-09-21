@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface BankDetails {
   bankName?: string;
@@ -21,6 +21,14 @@ export interface Transaction {
   createdAt: string;
 }
 
+interface DynamicPaymentSettings {
+  bankName?: string;
+  accountNumber?: string;
+  accountHolderName?: string;
+  walletAddress?: string;
+  network?: string;
+}
+
 interface ReceiptModalProps {
   transaction: Transaction | null;
   onClose: () => void;
@@ -32,12 +40,13 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
   const isDeposit = transaction.type.toUpperCase() === 'DEPOSIT';
   const isPending = transaction.status.toUpperCase() === 'PENDING';
-  const isCrypto =
-    transaction.paymentMethod.toLowerCase() === 'crypto' ||
-    transaction.paymentMethod.toLowerCase() === 'cryptocurrency';
-  const isBankTransfer =
-    transaction.paymentMethod.toLowerCase() === 'bank_transfer' ||
-    transaction.paymentMethod.toLowerCase() === 'bank';
+
+  const methodUpper = transaction.paymentMethod.toUpperCase();
+  const isBankTransfer = methodUpper === 'BANK_TRANSFER' || methodUpper === 'BANK';
+  const isCrypto = !isBankTransfer;
+
+  const [paymentSettings, setPaymentSettings] = useState<DynamicPaymentSettings | null>(null);
+  const [loadingSettings, setLoadingSettings] = useState<boolean>(false);
 
   const [copied, setCopied] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
@@ -48,6 +57,31 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // Fetch admin configured payment settings for this transaction's method
+  const fetchSettings = useCallback(async () => {
+    if (!isDeposit) return;
+
+    setLoadingSettings(true);
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${transaction.paymentMethod}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.settings) {
+          setPaymentSettings(data.settings);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load payment settings:', err);
+    } finally {
+      setLoadingSettings(false);
+    }
+  }, [isDeposit, transaction?.paymentMethod]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleCopy = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -70,7 +104,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     try {
       let processableFile = file;
 
-      // Check if the file is HEIC/HEIF format (typical for iPhone photos)
+      // Check for HEIC/HEIF format
       const isHeic =
         file.type === 'image/heic' ||
         file.type === 'image/heif' ||
@@ -78,10 +112,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         file.name.toLowerCase().endsWith('.heif');
 
       if (isHeic) {
-        // Dynamically import heic2any on client execution only
         const heic2any = (await import('heic2any')).default;
-
-        // Convert HEIC to JPEG blob
         const convertedBlob = (await heic2any({
           blob: file,
           toType: 'image/jpeg',
@@ -95,7 +126,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         );
       }
 
-      // Enforce 5MB limit on the converted file
       if (processableFile.size > 5 * 1024 * 1024) {
         setUploadError('File size must be under 5MB');
         return;
@@ -103,7 +133,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
       setSelectedFile(processableFile);
 
-      // Create local preview URL
       const reader = new FileReader();
       reader.onloadend = () => setPreviewUrl(reader.result as string);
       reader.readAsDataURL(processableFile);
@@ -113,7 +142,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
-  // Helper to convert file to base64 string
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -138,7 +166,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Ensure cookies are sent if your backend uses them for auth
+        credentials: 'include',
         body: JSON.stringify({ proofOfPayment: base64Image }),
       });
 
@@ -149,7 +177,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
       const data = await res.json();
       setUploadSuccess(true);
-      setSelectedFile(null); // Clear file selection after successful upload
+      setSelectedFile(null);
       if (onProofUploaded) onProofUploaded(data.transaction || data);
     } catch (err: any) {
       console.error('Upload Error:', err);
@@ -173,6 +201,18 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
+  // Determine fallback details if dynamic API record does not exist
+  const displayWalletAddress =
+    paymentSettings?.walletAddress || transaction.walletAddress || 'N/A';
+  const displayNetwork = paymentSettings?.network || '';
+
+  const displayBankName =
+    paymentSettings?.bankName || transaction.bankDetails?.bankName || 'N/A';
+  const displayAccountHolder =
+    paymentSettings?.accountHolderName || transaction.bankDetails?.accountHolderName || 'N/A';
+  const displayAccountNumber =
+    paymentSettings?.accountNumber || transaction.bankDetails?.accountNumber || 'N/A';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg border overflow-hidden my-8">
@@ -181,7 +221,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         <div className="bg-gray-50 border-b p-6 text-center relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 font-bold text-xl cursor-pointer"
           >
             ✕
           </button>
@@ -221,54 +261,78 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Payment Method</span>
-              <span className="font-medium text-gray-800">{transaction.paymentMethod}</span>
+              <span className="font-medium text-gray-800 uppercase">{transaction.paymentMethod}</span>
             </div>
 
-            {/* Admin Crypto Wallet Destination */}
+            {/* Dynamic Crypto Payment Destination */}
             {isCrypto && isDeposit && (
-              <div className="flex justify-between items-center gap-4 py-2 border-t pt-3">
-                <span className="text-gray-500 text-sm">Deposit Wallet</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
-                    136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6')}
-                    className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
-                  >
-                    {copied ? 'Copied!' : 'Copy'}
-                  </button>
-                </div>
+              <div className="border-t pt-3 space-y-2">
+                {loadingSettings ? (
+                  <div className="h-6 bg-gray-100 rounded animate-pulse" />
+                ) : (
+                  <>
+                    {displayNetwork && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-500 text-sm">Network</span>
+                        <span className="font-medium text-gray-800">{displayNetwork}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-gray-500 text-sm">Deposit Wallet</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
+                          {displayWalletAddress}
+                        </span>
+                        {displayWalletAddress !== 'N/A' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(displayWalletAddress)}
+                            className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition cursor-pointer"
+                          >
+                            {copied ? 'Copied!' : 'Copy'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
-            {/* Admin Bank Transfer Destination */}
+            {/* Dynamic Bank Transfer Destination */}
             {isBankTransfer && isDeposit && (
               <div className="border-t pt-3 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">Account Holder</span>
-                  <span className="font-medium text-gray-800">Investment Global</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 text-sm">Bank Name</span>
-                  <span className="font-medium text-gray-800">Global Investment Bank</span>
-                </div>
-                <div className="flex justify-between items-center gap-4">
-                  <span className="text-gray-500 text-sm">Account Number</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
-                      9123456789
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyAccount('9123456789')}
-                      className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
-                    >
-                      {copiedAcc ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                </div>
+                {loadingSettings ? (
+                  <div className="h-12 bg-gray-100 rounded animate-pulse" />
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-sm">Account Holder</span>
+                      <span className="font-medium text-gray-800">{displayAccountHolder}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500 text-sm">Bank Name</span>
+                      <span className="font-medium text-gray-800">{displayBankName}</span>
+                    </div>
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-gray-500 text-sm">Account Number</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
+                          {displayAccountNumber}
+                        </span>
+                        {displayAccountNumber !== 'N/A' && (
+                          <button
+                            type="button"
+                            onClick={() => handleCopyAccount(displayAccountNumber)}
+                            className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition cursor-pointer"
+                          >
+                            {copiedAcc ? 'Copied!' : 'Copy'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -279,7 +343,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
               </span>
             </div>
 
-            {/* Proof of Payment Upload / Display Section */}
+            {/* Proof of Payment Section */}
             {isDeposit && (
               <div className="mt-4 pt-4 border-t space-y-3">
                 <p className="text-xs font-bold text-gray-700 uppercase">Proof of Payment</p>
@@ -296,7 +360,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                   </div>
                 )}
 
-                {/* Show Image Preview if Uploaded or Provided */}
                 {(previewUrl || transaction.proofOfPayment) ? (
                   <div className="space-y-3">
                     <div className="relative rounded-lg border overflow-hidden bg-gray-50">
@@ -307,7 +370,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                       />
                     </div>
 
-                    {/* Submit button for newly selected local image */}
                     {selectedFile && !uploadSuccess && (
                       <button
                         type="button"
@@ -319,7 +381,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                       </button>
                     )}
 
-                    {/* Button to change or clear the image */}
                     {isPending && !uploadSuccess && (
                       <button
                         type="button"
@@ -334,7 +395,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                     )}
                   </div>
                 ) : isPending ? (
-                  /* Form to select file if pending */
                   <div className="space-y-3">
                     <input
                       type="file"

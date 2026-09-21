@@ -149,4 +149,32 @@ router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
+// Express Route: PATCH /api/transaction/:id/upload-proof
+router.patch('/:id/upload-proof', async (req, res) => {
+  try {
+    const { proofOfPayment } = req.body;
+
+    if (!proofOfPayment) {
+      return res.status(400).json({ message: 'Proof of payment is required' });
+    }
+
+    const transaction = await Transaction.findByIdAndUpdate(
+      req.params.id,
+      { proofOfPayment },
+      { new: true }
+    );
+
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
+
+    res.status(200).json({
+      message: 'Proof uploaded successfully',
+      transaction,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

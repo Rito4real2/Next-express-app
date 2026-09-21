@@ -37,6 +37,9 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+
+  proofOfPayment: { type: String },
+  
   description: { 
     type: String
   }

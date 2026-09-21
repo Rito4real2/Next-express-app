@@ -17,23 +17,37 @@ export interface Transaction {
   paymentMethod: string;
   bankDetails?: BankDetails;
   walletAddress?: string;
+  proofOfPayment?: string;
   createdAt: string;
 }
 
 interface ReceiptModalProps {
   transaction: Transaction | null;
   onClose: () => void;
+  onProofUploaded?: (updatedTx: Transaction) => void;
 }
 
-export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps) {
+export default function ReceiptModal({ transaction, onClose, onProofUploaded }: ReceiptModalProps) {
   if (!transaction) return null;
 
   const isDeposit = transaction.type.toUpperCase() === 'DEPOSIT';
-  const isCrypto = transaction.paymentMethod.toLowerCase() === 'crypto' || transaction.paymentMethod.toLowerCase() === 'cryptocurrency';
-  const isBankTransfer = transaction.paymentMethod.toLowerCase() === 'bank_transfer' || transaction.paymentMethod.toLowerCase() === 'bank';
+  const isPending = transaction.status.toUpperCase() === 'PENDING';
+  const isCrypto =
+    transaction.paymentMethod.toLowerCase() === 'crypto' ||
+    transaction.paymentMethod.toLowerCase() === 'cryptocurrency';
+  const isBankTransfer =
+    transaction.paymentMethod.toLowerCase() === 'bank_transfer' ||
+    transaction.paymentMethod.toLowerCase() === 'bank';
 
   const [copied, setCopied] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
+
+  // File Upload State
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(transaction.proofOfPayment || null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const handleCopy = (address: string) => {
     navigator.clipboard.writeText(address);
@@ -42,30 +56,82 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
   };
 
   const handleCopyAccount = (accountNumber: string) => {
-  navigator.clipboard.writeText(accountNumber);
-  setCopiedAcc(true);
-  setTimeout(() => setCopiedAcc(false), 2000);
-};
+    navigator.clipboard.writeText(accountNumber);
+    setCopiedAcc(true);
+    setTimeout(() => setCopiedAcc(false), 2000);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError('File size must be under 5MB');
+        return;
+      }
+      setSelectedFile(file);
+      setUploadError(null);
+
+      // Create local preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUploadProof = async () => {
+    if (!selectedFile) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedFile);
+      reader.onloadend = async () => {
+        const base64Image = reader.result;
+
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${API_BASE_URL}/api/transaction/${transaction._id}/upload-proof`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ proofOfPayment: base64Image }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || 'Failed to upload proof');
+        }
+
+        const data = await res.json();
+        setUploadSuccess(true);
+        if (onProofUploaded) onProofUploaded(data.transaction || data);
+      };
+    } catch (err: any) {
+      setUploadError(err.message || 'Error uploading proof of payment.');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const getStatusBadgeColor = (status: Transaction['status']) => {
-  switch (status) {
-    case 'APPROVED':
-    case 'approved':
-      return 'bg-green-100 text-green-800';
-    case 'PENDING':
-    case 'pending':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'REJECTED':
-    case 'rejected':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+      case 'COMPLETED':
+        return 'bg-green-100 text-green-800 border-green-300';
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'REJECTED':
+        return 'bg-red-100 text-red-800 border-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg border overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg border overflow-hidden my-8">
         
         {/* Header */}
         <div className="bg-gray-50 border-b p-6 text-center relative">
@@ -113,90 +179,125 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
               <span className="text-gray-500">Payment Method</span>
               <span className="font-medium text-gray-800">{transaction.paymentMethod}</span>
             </div>
-            
-            {isCrypto && transaction?.type === 'DEPOSIT' && (
-            <div className="flex justify-between items-center gap-4 py-2">
-              <span className="text-gray-500 text-sm">Wallet Address</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
-                  136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleCopy('136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6')}
-                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
-                >
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
-            </div>
-          )}
 
-          {isBankTransfer && transaction?.type === 'DEPOSIT' && (
-          <>
-            <div className="flex justify-between items-center gap-4 py-2">
-              <span className="text-gray-500 text-sm">Account Holder</span>
-              <span className="font-medium text-gray-800">Investment Global</span>
-            </div>
-            <div className="flex justify-between items-center gap-4 py-2">
-              <span className="text-gray-500 text-sm">Bank Name</span>
-              <span className="font-medium text-gray-800">Global Investment Bank</span>
-            </div>
-            <div className="flex justify-between items-center gap-4 py-2">
-              <span className="text-gray-500 text-sm">Account Number</span>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
-                  9123456789
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleCopyAccount('9123456789')}
-                  className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
-                >
-                  {copiedAcc ? 'Copied!' : 'Copy'}
-                </button>
+            {/* Admin Crypto Wallet Destination */}
+            {isCrypto && isDeposit && (
+              <div className="flex justify-between items-center gap-4 py-2 border-t pt-3">
+                <span className="text-gray-500 text-sm">Deposit Wallet</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
+                    136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy('136tj818eAfmaPsVpcYx9r1kfMFcKhPdW6')}
+                    className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
+                  >
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
+            )}
 
-            <div className="flex justify-between items-center">
+            {/* Admin Bank Transfer Destination */}
+            {isBankTransfer && isDeposit && (
+              <div className="border-t pt-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm">Account Holder</span>
+                  <span className="font-medium text-gray-800">Investment Global</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 text-sm">Bank Name</span>
+                  <span className="font-medium text-gray-800">Global Investment Bank</span>
+                </div>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="text-gray-500 text-sm">Account Number</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
+                      9123456789
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyAccount('9123456789')}
+                      className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition"
+                    >
+                      {copiedAcc ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center border-t pt-3">
               <span className="text-gray-500">Date & Time</span>
               <span className="font-medium text-gray-800">
                 {new Date(transaction.createdAt).toLocaleString()}
               </span>
             </div>
 
-            {/* Dynamic Details for Bank Transfers */}
-            {transaction.bankDetails && (
-              <div className="mt-4 pt-3 border-t space-y-2 bg-gray-50 p-3 rounded">
-                <p className="text-xs font-bold text-gray-500 uppercase">Bank Details</p>
-                {transaction.bankDetails.bankName && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Bank Name:</span>
-                    <span className="font-medium text-gray-800">{transaction.bankDetails.bankName}</span>
-                  </div>
-                )}
-                {transaction.bankDetails.accountHolderName && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Account Holder:</span>
-                    <span className="font-medium text-gray-800">{transaction.bankDetails.accountHolderName}</span>
-                  </div>
-                )}
-                {transaction.bankDetails.accountNumber && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Account Number:</span>
-                    <span className="font-medium text-gray-800">****{transaction.bankDetails.accountNumber.slice(-4)}</span>
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Proof of Payment Upload / Display Section */}
+            {isDeposit && (
+              <div className="mt-4 pt-4 border-t space-y-3">
+                <p className="text-xs font-bold text-gray-700 uppercase">Proof of Payment</p>
 
-            {/* Dynamic Details for Crypto */}
-            {transaction.walletAddress && (
-              <div className="mt-4 pt-3 border-t bg-gray-50 p-3 rounded">
-                <p className="text-xs font-bold text-gray-500 uppercase">Wallet Address</p>
-                <p className="font-mono text-xs text-gray-800 break-all mt-1">{transaction.walletAddress}</p>
+                {uploadError && (
+                  <div className="p-2 bg-red-100 text-red-700 text-xs rounded border border-red-200">
+                    {uploadError}
+                  </div>
+                )}
+
+                {uploadSuccess && (
+                  <div className="p-2 bg-green-100 text-green-700 text-xs rounded border border-green-200">
+                    Proof submitted successfully! Awaiting admin review.
+                  </div>
+                )}
+
+                {/* Show Image Preview if Uploaded or Provided */}
+                {(previewUrl || transaction.proofOfPayment) ? (
+                  <div className="space-y-2">
+                    <div className="relative rounded-lg border overflow-hidden bg-gray-50">
+                      <img
+                        src={previewUrl || transaction.proofOfPayment}
+                        alt="Proof of Payment"
+                        className="w-full max-h-48 object-contain py-2"
+                      />
+                    </div>
+                    {isPending && !uploadSuccess && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewUrl(null);
+                          setSelectedFile(null);
+                        }}
+                        className="text-xs text-red-600 hover:underline"
+                      >
+                        Change receipt image
+                      </button>
+                    )}
+                  </div>
+                ) : isPending ? (
+                  /* Form to select file if pending */
+                  <div className="space-y-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border rounded-md p-1"
+                    />
+                    {selectedFile && (
+                      <button
+                        type="button"
+                        onClick={handleUploadProof}
+                        disabled={uploading}
+                        className="w-full py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+                      >
+                        {uploading ? 'Uploading Receipt...' : 'Submit Proof of Payment'}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 italic">No receipt attached.</p>
+                )}
               </div>
             )}
           </div>
@@ -205,12 +306,14 @@ export default function ReceiptModal({ transaction, onClose }: ReceiptModalProps
         {/* Footer Actions */}
         <div className="bg-gray-50 border-t p-4 flex gap-3">
           <button
+            type="button"
             onClick={() => window.print()}
             className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium transition text-sm"
           >
             Print Receipt
           </button>
           <button
+            type="button"
             onClick={onClose}
             className="flex-1 py-2 px-4 bg-gray-800 text-white rounded-md hover:bg-gray-900 font-medium transition text-sm"
           >

@@ -42,7 +42,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
       <AdminNavbar />
       <form onSubmit={handleLogin} className="p-8 bg-white rounded shadow-md w-full max-w-md space-y-4">
         <h1 className="text-2xl font-bold text-gray-800">Admin Portal Login</h1>

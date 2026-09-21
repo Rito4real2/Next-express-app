@@ -37,7 +37,8 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({limit: '10mb'})); // Increased limit for large payloads
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Increased limit for large payloads
 app.use(cookieParser());
 
 // 1. HEALTH CHECK ROUTE (Placed BEFORE DB middleware so it always returns 200 OK)

@@ -78,6 +78,16 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
+  // Helper to convert file to base64 string
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleUploadProof = async () => {
     if (!selectedFile) return;
 
@@ -85,30 +95,28 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     setUploadError(null);
 
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(selectedFile);
-      reader.onloadend = async () => {
-        const base64Image = reader.result;
+      const base64Image = await fileToBase64(selectedFile);
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${API_BASE_URL}/api/transaction/${transaction._id}/upload-proof`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ proofOfPayment: base64Image }),
-        });
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_BASE_URL}/api/transaction/${transaction._id}/upload-proof`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ proofOfPayment: base64Image }),
+      });
 
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.message || 'Failed to upload proof');
-        }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || 'Failed to upload proof');
+      }
 
-        const data = await res.json();
-        setUploadSuccess(true);
-        if (onProofUploaded) onProofUploaded(data.transaction || data);
-      };
+      const data = await res.json();
+      setUploadSuccess(true);
+      setSelectedFile(null); // Clear file selection after successful upload
+      if (onProofUploaded) onProofUploaded(data.transaction || data);
     } catch (err: any) {
+      console.error('Upload Error:', err);
       setUploadError(err.message || 'Error uploading proof of payment.');
     } finally {
       setUploading(false);
@@ -269,7 +277,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                         type="button"
                         onClick={handleUploadProof}
                         disabled={uploading}
-                        className="w-full py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
+                        className="w-full py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 transition shadow-sm cursor-pointer"
                       >
                         {uploading ? 'Uploading Receipt...' : 'Submit Proof of Payment'}
                       </button>
@@ -283,7 +291,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                           setPreviewUrl(null);
                           setSelectedFile(null);
                         }}
-                        className="text-xs text-red-600 hover:underline block"
+                        className="text-xs text-red-600 hover:underline block cursor-pointer"
                       >
                         Change receipt image
                       </button>
@@ -312,14 +320,14 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
           <button
             type="button"
             onClick={() => window.print()}
-            className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium transition text-sm"
+            className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium transition text-sm cursor-pointer"
           >
             Print Receipt
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2 px-4 bg-gray-800 text-white rounded-md hover:bg-gray-900 font-medium transition text-sm"
+            className="flex-1 py-2 px-4 bg-gray-800 text-white rounded-md hover:bg-gray-900 font-medium transition text-sm cursor-pointer"
           >
             Close
           </button>

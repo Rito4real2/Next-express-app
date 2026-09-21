@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import heic2any from 'heic2any';
 
 interface BankDetails {
   bankName?: string;
@@ -63,53 +62,56 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  setUploadError(null);
+    setUploadError(null);
 
-  try {
-    let processableFile = file;
+    try {
+      let processableFile = file;
 
-    // Check if the file is HEIC/HEIF format (typical for iPhone photos)
-    const isHeic =
-      file.type === 'image/heic' ||
-      file.type === 'image/heif' ||
-      file.name.toLowerCase().endsWith('.heic') ||
-      file.name.toLowerCase().endsWith('.heif');
+      // Check if the file is HEIC/HEIF format (typical for iPhone photos)
+      const isHeic =
+        file.type === 'image/heic' ||
+        file.type === 'image/heif' ||
+        file.name.toLowerCase().endsWith('.heic') ||
+        file.name.toLowerCase().endsWith('.heif');
 
-    if (isHeic) {
-      // Convert HEIC to JPEG blob
-      const convertedBlob = (await heic2any({
-        blob: file,
-        toType: 'image/jpeg',
-        quality: 0.8,
-      })) as Blob;
+      if (isHeic) {
+        // Dynamically import heic2any on client execution only
+        const heic2any = (await import('heic2any')).default;
 
-      processableFile = new File(
-        [convertedBlob],
-        file.name.replace(/\.(heic|HEIC|heif|HEIF)$/, '.jpg'),
-        { type: 'image/jpeg' }
-      );
+        // Convert HEIC to JPEG blob
+        const convertedBlob = (await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.8,
+        })) as Blob;
+
+        processableFile = new File(
+          [convertedBlob],
+          file.name.replace(/\.(heic|HEIC|heif|HEIF)$/, '.jpg'),
+          { type: 'image/jpeg' }
+        );
+      }
+
+      // Enforce 5MB limit on the converted file
+      if (processableFile.size > 5 * 1024 * 1024) {
+        setUploadError('File size must be under 5MB');
+        return;
+      }
+
+      setSelectedFile(processableFile);
+
+      // Create local preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewUrl(reader.result as string);
+      reader.readAsDataURL(processableFile);
+    } catch (err) {
+      console.error('File processing error:', err);
+      setUploadError('Could not process this image format. Please select another image.');
     }
-
-    // Enforce 5MB limit on the converted file
-    if (processableFile.size > 5 * 1024 * 1024) {
-      setUploadError('File size must be under 5MB');
-      return;
-    }
-
-    setSelectedFile(processableFile);
-
-    // Create local preview URL
-    const reader = new FileReader();
-    reader.onloadend = () => setPreviewUrl(reader.result as string);
-    reader.readAsDataURL(processableFile);
-  } catch (err) {
-    console.error('File processing error:', err);
-    setUploadError('Could not process this image format. Please select another image.');
-  }
-};
+  };
 
   // Helper to convert file to base64 string
   const fileToBase64 = (file: File): Promise<string> => {
@@ -136,7 +138,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Send HttpOnly auth cookie to backend
         body: JSON.stringify({ proofOfPayment: base64Image }),
       });
 

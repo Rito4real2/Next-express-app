@@ -4,17 +4,14 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useIsMounted } from '@/hooks/useIsMounted';
-import i18n from '@/public/i18n'; // Ensure i18n is initialized
+import '@/public/i18n'; // Force i18n instance initialization
 
 export default function NavigationPage() {
   const [isOpen, setIsOpen] = useState(false);
   const { t, i18n } = useTranslation();
   const isMounted = useIsMounted();
-
-  // 1. Maintain reactive state for selected language
   const [selectedLang, setSelectedLang] = useState<string>('en');
 
-  // 2. Keep state in sync with i18n instance on mount and when language changes
   useEffect(() => {
     if (i18n.language) {
       setSelectedLang(i18n.language);
@@ -33,10 +30,9 @@ export default function NavigationPage() {
 
   const toggleMenu = () => setIsOpen((prev) => !prev);
 
-  // 3. Async change handler
   const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
-    setSelectedLang(newLang); // Optimistic UI update
+    setSelectedLang(newLang);
     await i18n.changeLanguage(newLang);
   };
 
@@ -45,14 +41,12 @@ export default function NavigationPage() {
       <header className="w-full flex flex-col items-center justify-center p-4">
         <nav className="w-full max-w-6xl flex flex-wrap items-center justify-between border-2 border-solid border-[#ddd] p-5 relative bg-white">
           
-          {/* Logo Brand */}
           <div>
             <h2 className="text-black text-2xl font-mono font-bold">
               {t('dashboard.title', 'Broker')}
             </h2>
           </div>
 
-          {/* Hamburger Icon Button */}
           <button
             onClick={toggleMenu}
             type="button"
@@ -77,7 +71,6 @@ export default function NavigationPage() {
             />
           </button>
 
-          {/* Navigation Links List */}
           <ul
             className={`w-full md:w-auto flex flex-col md:flex-row items-center md:items-center gap-4 md:gap-6 mt-4 md:mt-0 ${
               isOpen ? 'flex' : 'hidden md:flex'
@@ -116,7 +109,6 @@ export default function NavigationPage() {
               </Link>
             </li>
 
-            {/* Language Switcher */}
             <li className="w-full md:w-auto">
               {isMounted ? (
                 <select

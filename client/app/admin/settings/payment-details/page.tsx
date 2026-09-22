@@ -42,21 +42,29 @@ export default function AdminPaymentSettingsForm() {
 
   // Helper function to paste clipboard text directly into a specific input field
   const handlePaste = async (fieldName: keyof PaymentSettings) => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setFormData((prev) => ({ ...prev, [fieldName]: text.trim() }));
+    let pastedText = '';
+
+    if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+      try {
+        pastedText = await navigator.clipboard.readText();
+      } catch (err) {
+        console.warn('Async Clipboard API failed or permission was denied. Falling back to prompt.', err);
       }
-    } catch (err) {
-      console.error('Failed to read clipboard contents: ', err);
-      setStatusMessage({
-        type: 'error',
-        text: 'Clipboard access denied or unsupported by your browser.',
-      });
+    }
+
+    if (!pastedText) {
+      const inputFromPrompt = window.prompt('Paste your copied content below (Press Ctrl+V or Cmd+V):');
+      if (inputFromPrompt !== null) {
+        pastedText = inputFromPrompt;
+      }
+    }
+
+    if (pastedText.trim()) {
+      setFormData((prev) => ({ ...prev, [fieldName]: pastedText.trim() }));
+      setStatusMessage(null);
     }
   };
 
-  // Fetch current payment settings when selectedType changes
   const fetchSettings = useCallback(async (typeToFetch: PaymentType) => {
     setIsLoading(true);
     setStatusMessage(null);
@@ -83,7 +91,6 @@ export default function AdminPaymentSettingsForm() {
           isActive: data.settings.isActive ?? true,
         });
       } else {
-        // Reset form defaults if no document exists yet for this type
         setFormData({
           type: typeToFetch,
           bankName: '',
@@ -94,12 +101,16 @@ export default function AdminPaymentSettingsForm() {
           isActive: true,
         });
       }
-    } catch (err: any) {
+    } 
+    
+    catch (err: any) {
       setStatusMessage({
         type: 'error',
         text: err.message || 'Unable to load payment settings.',
       });
-    } finally {
+    }
+    
+    finally {
       setIsLoading(false);
     }
   }, []);
@@ -123,8 +134,10 @@ export default function AdminPaymentSettingsForm() {
     }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+
     setIsSubmitting(true);
     setStatusMessage(null);
 
@@ -151,7 +164,7 @@ export default function AdminPaymentSettingsForm() {
     } catch (err: any) {
       setStatusMessage({
         type: 'error',
-        text: err.message || 'An unexpected error occurred.',
+        text: err?.message || 'An unexpected error occurred during save.',
       });
     } finally {
       setIsSubmitting(false);
@@ -167,7 +180,6 @@ export default function AdminPaymentSettingsForm() {
         </p>
       </div>
 
-      {/* Select Payment Method Type */}
       <div className="mb-6">
         <label htmlFor="paymentType" className="block text-sm font-semibold text-gray-700 mb-2">
           Select Payment Option to Configure:
@@ -205,7 +217,6 @@ export default function AdminPaymentSettingsForm() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Status Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
             <div>
               <span className="text-sm font-semibold text-gray-700 block">Enable Payment Method</span>
@@ -221,7 +232,6 @@ export default function AdminPaymentSettingsForm() {
             />
           </div>
 
-          {/* Conditional Fields: Bank Transfer */}
           {isBank ? (
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">🏦 Bank Transfer Details</h3>
@@ -230,34 +240,30 @@ export default function AdminPaymentSettingsForm() {
                   <label htmlFor="bankName" className="block text-xs font-semibold text-gray-600 mb-1">
                     Bank Name
                   </label>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      id="bankName"
-                      name="bankName"
-                      value={formData.bankName}
-                      onChange={handleChange}
-                      placeholder="e.g. Chase Bank"
-                      className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    id="bankName"
+                    name="bankName"
+                    value={formData.bankName}
+                    onChange={handleChange}
+                    placeholder="e.g. Chase Bank"
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
                 </div>
 
                 <div>
                   <label htmlFor="accountHolderName" className="block text-xs font-semibold text-gray-600 mb-1">
                     Account Holder Name
                   </label>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      id="accountHolderName"
-                      name="accountHolderName"
-                      value={formData.accountHolderName}
-                      onChange={handleChange}
-                      placeholder="e.g. Acme Corp LLC"
-                      className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    id="accountHolderName"
+                    name="accountHolderName"
+                    value={formData.accountHolderName}
+                    onChange={handleChange}
+                    placeholder="e.g. Acme Corp LLC"
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
                 </div>
               </div>
 
@@ -286,7 +292,6 @@ export default function AdminPaymentSettingsForm() {
               </div>
             </div>
           ) : (
-            /* Conditional Fields: Crypto */
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
                 🪙 {selectedType} Crypto Details
@@ -320,23 +325,20 @@ export default function AdminPaymentSettingsForm() {
                   <label htmlFor="network" className="block text-xs font-semibold text-gray-600 mb-1">
                     Network
                   </label>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      id="network"
-                      name="network"
-                      value={formData.network}
-                      onChange={handleChange}
-                      placeholder="e.g. TRC20, ERC20, BTC"
-                      className="w-full pl-3 pr-16 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    id="network"
+                    name="network"
+                    value={formData.network}
+                    onChange={handleChange}
+                    placeholder="e.g. TRC20, ERC20, BTC"
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Action Button */}
           <div className="pt-4 border-t flex justify-end">
             <button
               type="submit"

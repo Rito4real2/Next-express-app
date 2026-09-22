@@ -2,6 +2,8 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+import '@/public/i18n';
 
 export interface UserProfile {
   _id: string;
@@ -18,6 +20,7 @@ interface ProfileFormProps {
 }
 
 export default function ProfileForm({ initialData }: ProfileFormProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -56,14 +59,14 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to update profile settings.');
+        setError(data.error || t('profile.errors.update_failed', 'Failed to update profile settings.'));
         return;
       }
 
-      setStatus(data.message || 'Profile updated successfully!');
+      setStatus(data.message || t('profile.success', 'Profile updated successfully!'));
       router.refresh(); // Refresh Server Components to update stale cached user data
     } catch (err) {
-      setError('Unable to connect to server. Please try again.');
+      setError(t('profile.errors.connection', 'Unable to connect to server. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +74,7 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Edit Profile</h2>
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">{t('profile.title', 'Edit Profile')}</h2>
 
       {/* Alert Notifications */}
       {status && (
@@ -88,58 +91,58 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Full Name</label>
+          <label className="block text-sm font-medium text-gray-700">{t('profile.full_name', 'Full Name')}</label>
           <input
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             className="w-full p-2 border rounded mt-1 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="John Doe"
+            placeholder={t('profile.placeholders.full_name', 'John Doe')}
           />
         </div>
 
         {/* Username */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Username</label>
+          <label className="block text-sm font-medium text-gray-700">{t('profile.username', 'Username')}</label>
           <input
             type="text"
             value={userName}
             onChange={(e) => setUserName(e.target.value)}
             className="w-full p-2 border rounded mt-1 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="johndoe"
+            placeholder={t('profile.placeholders.username', 'johndoe')}
           />
         </div>
 
         {/* Email Address */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Email Address</label>
+          <label className="block text-sm font-medium text-gray-700">{t('profile.email', 'Email Address')}</label>
           <input
             type="email"
             value={emailAddress}
             onChange={(e) => setEmailAddress(e.target.value)}
             className="w-full p-2 border rounded mt-1 text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="john@example.com"
+            placeholder={t('profile.placeholders.email', 'john@example.com')}
           />
         </div>
 
         {/* Gender Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Gender</label>
+          <label className="block text-sm font-medium text-gray-700">{t('profile.gender', 'Gender')}</label>
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value)}
             className="w-full p-2 border rounded mt-1 text-gray-800 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
           >
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other / Prefer not to say</option>
+            <option value="male">{t('profile.genders.male', 'Male')}</option>
+            <option value="female">{t('profile.genders.female', 'Female')}</option>
+            <option value="other">{t('profile.genders.other', 'Other / Prefer not to say')}</option>
           </select>
         </div>
 
         {/* Read-only Balance Display (If present) */}
         {initialData?.balance !== undefined && (
           <div>
-            <label className="block text-sm font-medium text-gray-500">Account Balance</label>
+            <label className="block text-sm font-medium text-gray-500">{t('profile.account_balance', 'Account Balance')}</label>
             <input
               type="text"
               value={`$${initialData.balance.toFixed(2)}`}
@@ -153,9 +156,9 @@ export default function ProfileForm({ initialData }: ProfileFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition disabled:opacity-50"
+          className="w-full py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition disabled:opacity-50 cursor-pointer"
         >
-          {loading ? 'Saving Changes...' : 'Save Settings'}
+          {loading ? t('profile.saving', 'Saving Changes...') : t('profile.save_settings', 'Save Settings')}
         </button>
       </form>
     </div>

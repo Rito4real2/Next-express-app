@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import '@/public/i18n';
 
 interface BankDetails {
   bankName?: string;
@@ -37,6 +39,8 @@ interface ReceiptModalProps {
 }
 
 export default function ReceiptModal({ transaction, onClose, onProofUploaded }: ReceiptModalProps) {
+  const { t, i18n } = useTranslation();
+
   if (!transaction) return null;
 
   const isDeposit = transaction.type?.toUpperCase() === 'DEPOSIT';
@@ -61,37 +65,37 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
   // Fetch admin configured payment settings for this transaction's method
   const fetchSettings = useCallback(async () => {
-  if (!isDeposit || !transaction.paymentMethod) return;
+    if (!isDeposit || !transaction.paymentMethod) return;
 
-  setLoadingSettings(true);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-  
-  try {
-    // Send normalized UPPERCASE type parameter to match database enum/string
-    const queryMethod = encodeURIComponent(transaction.paymentMethod.trim().toUpperCase());
-    
-    const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Ensures auth cookies/tokens pass if requireAuth middleware is active
-    });
-    
-    if (res.ok) {
-      const responseData = await res.json();
-      if (responseData.settings) {
-        setPaymentSettings(responseData.settings);
+    setLoadingSettings(true);
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+    try {
+      // Send normalized UPPERCASE type parameter to match database enum/string
+      const queryMethod = encodeURIComponent(transaction.paymentMethod.trim().toUpperCase());
+
+      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ensures auth cookies/tokens pass if requireAuth middleware is active
+      });
+
+      if (res.ok) {
+        const responseData = await res.json();
+        if (responseData.settings) {
+          setPaymentSettings(responseData.settings);
+        }
+      } else {
+        console.error('Payment settings request failed with status:', res.status);
       }
-    } else {
-      console.error('Payment settings request failed with status:', res.status);
+    } catch (err) {
+      console.error('Failed to load payment settings:', err);
+    } finally {
+      setLoadingSettings(false);
     }
-  } catch (err) {
-    console.error('Failed to load payment settings:', err);
-  } finally {
-    setLoadingSettings(false);
-  }
-}, [isDeposit, transaction?.paymentMethod]);
+  }, [isDeposit, transaction?.paymentMethod]);
 
   useEffect(() => {
     fetchSettings();
@@ -141,7 +145,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
       }
 
       if (processableFile.size > 5 * 1024 * 1024) {
-        setUploadError('File size must be under 5MB');
+        setUploadError(t('receipt.errors.file_size_exceeded', 'File size must be under 5MB'));
         return;
       }
 
@@ -152,7 +156,9 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
       reader.readAsDataURL(processableFile);
     } catch (err) {
       console.error('File processing error:', err);
-      setUploadError('Could not process this image format. Please select another image.');
+      setUploadError(
+        t('receipt.errors.file_processing', 'Could not process this image format. Please select another image.')
+      );
     }
   };
 
@@ -186,7 +192,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || 'Failed to upload proof');
+        throw new Error(errData.message || t('receipt.errors.upload_failed', 'Failed to upload proof'));
       }
 
       const data = await res.json();
@@ -195,7 +201,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
       if (onProofUploaded) onProofUploaded(data.transaction || data);
     } catch (err: any) {
       console.error('Upload Error:', err);
-      setUploadError(err.message || 'Error uploading proof of payment.');
+      setUploadError(err.message || t('receipt.errors.upload_generic', 'Error uploading proof of payment.'));
     } finally {
       setUploading(false);
     }
@@ -220,16 +226,18 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     paymentSettings?.walletAddress ||
     paymentSettings?.address ||
     transaction.walletAddress ||
-    'N/A';
+    t('common.not_applicable', 'N/A');
 
   const displayNetwork = paymentSettings?.network || '';
 
   const displayBankName =
-    paymentSettings?.bankName || transaction.bankDetails?.bankName || 'N/A';
+    paymentSettings?.bankName || transaction.bankDetails?.bankName || t('common.not_applicable', 'N/A');
   const displayAccountHolder =
-    paymentSettings?.accountHolderName || transaction.bankDetails?.accountHolderName || 'N/A';
+    paymentSettings?.accountHolderName ||
+    transaction.bankDetails?.accountHolderName ||
+    t('common.not_applicable', 'N/A');
   const displayAccountNumber =
-    paymentSettings?.accountNumber || transaction.bankDetails?.accountNumber || 'N/A';
+    paymentSettings?.accountNumber || transaction.bankDetails?.accountNumber || t('common.not_applicable', 'N/A');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
@@ -246,9 +254,9 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-blue-600 mb-3 font-semibold text-lg">
             {isDeposit ? '↓' : '↑'}
           </div>
-          <h2 className="text-xl font-bold text-gray-800">Transaction Receipt</h2>
+          <h2 className="text-xl font-bold text-gray-800">{t('receipt.title', 'Transaction Receipt')}</h2>
           <p className="text-xs text-gray-500 mt-1">
-            Ref: {transaction.reference || transaction._id}
+            {t('receipt.reference', 'Ref')}: {transaction.reference || transaction._id}
           </p>
         </div>
 
@@ -257,7 +265,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
           
           {/* Amount Display */}
           <div className="text-center py-2 border-b">
-            <span className="text-xs uppercase text-gray-500 font-medium">Amount</span>
+            <span className="text-xs uppercase text-gray-500 font-medium">{t('receipt.amount', 'Amount')}</span>
             <div className={`text-3xl font-extrabold ${isDeposit ? 'text-green-600' : 'text-red-600'}`}>
               {isDeposit ? '+' : '-'}${transaction.amount ? transaction.amount.toFixed(2) : '0.00'}
             </div>
@@ -266,20 +274,24 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
           {/* Key Details Grid */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Transaction Type</span>
-              <span className="font-semibold uppercase">{transaction.type}</span>
-            </div>
-
-            <div className="flex justify-between items-center">
-              <span className="text-gray-500">Status</span>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadgeColor(transaction.status)}`}>
-                {transaction.status?.toUpperCase()}
+              <span className="text-gray-500">{t('receipt.type', 'Transaction Type')}</span>
+              <span className="font-semibold uppercase">
+                {t(`receipt.types.${transaction.type.toLowerCase()}`, transaction.type)}
               </span>
             </div>
 
             <div className="flex justify-between items-center">
-              <span className="text-gray-500">Payment Method</span>
-              <span className="font-medium text-gray-800 uppercase">{transaction.paymentMethod}</span>
+              <span className="text-gray-500">{t('receipt.status', 'Status')}</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadgeColor(transaction.status)}`}>
+                {t(`receipt.statuses.${transaction.status.toLowerCase()}`, transaction.status?.toUpperCase())}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-gray-500">{t('receipt.payment_method', 'Payment Method')}</span>
+              <span className="font-medium text-gray-800 uppercase">
+                {t(`receipt.methods.${transaction.paymentMethod.toLowerCase()}`, transaction.paymentMethod)}
+              </span>
             </div>
 
             {/* Dynamic Crypto Payment Destination */}
@@ -291,23 +303,23 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                   <>
                     {displayNetwork && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-500 text-sm">Network</span>
+                        <span className="text-gray-500 text-sm">{t('receipt.network', 'Network')}</span>
                         <span className="font-medium text-gray-800">{displayNetwork}</span>
                       </div>
                     )}
                     <div className="flex justify-between items-center gap-4">
-                      <span className="text-gray-500 text-sm">Deposit Wallet</span>
+                      <span className="text-gray-500 text-sm">{t('receipt.deposit_wallet', 'Deposit Wallet')}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-37.5">
                           {displayWalletAddress}
                         </span>
-                        {displayWalletAddress !== 'N/A' && (
+                        {displayWalletAddress !== t('common.not_applicable', 'N/A') && (
                           <button
                             type="button"
                             onClick={() => handleCopy(displayWalletAddress)}
                             className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition cursor-pointer"
                           >
-                            {copied ? 'Copied!' : 'Copy'}
+                            {copied ? t('common.copied', 'Copied!') : t('common.copy', 'Copy')}
                           </button>
                         )}
                       </div>
@@ -325,26 +337,26 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                 ) : (
                   <>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500 text-sm">Account Holder</span>
+                      <span className="text-gray-500 text-sm">{t('receipt.account_holder', 'Account Holder')}</span>
                       <span className="font-medium text-gray-800">{displayAccountHolder}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500 text-sm">Bank Name</span>
+                      <span className="text-gray-500 text-sm">{t('receipt.bank_name', 'Bank Name')}</span>
                       <span className="font-medium text-gray-800">{displayBankName}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
-                      <span className="text-gray-500 text-sm">Account Number</span>
+                      <span className="text-gray-500 text-sm">{t('receipt.account_number', 'Account Number')}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-sm font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all">
                           {displayAccountNumber}
                         </span>
-                        {displayAccountNumber !== 'N/A' && (
+                        {displayAccountNumber !== t('common.not_applicable', 'N/A') && (
                           <button
                             type="button"
                             onClick={() => handleCopyAccount(displayAccountNumber)}
                             className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition cursor-pointer"
                           >
-                            {copiedAcc ? 'Copied!' : 'Copy'}
+                            {copiedAcc ? t('common.copied', 'Copied!') : t('common.copy', 'Copy')}
                           </button>
                         )}
                       </div>
@@ -355,16 +367,20 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
             )}
 
             <div className="flex justify-between items-center border-t pt-3">
-              <span className="text-gray-500">Date & Time</span>
+              <span className="text-gray-500">{t('receipt.date_time', 'Date & Time')}</span>
               <span className="font-medium text-gray-800">
-                {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : 'N/A'}
+                {transaction.createdAt
+                  ? new Date(transaction.createdAt).toLocaleString(i18n.language)
+                  : t('common.not_applicable', 'N/A')}
               </span>
             </div>
 
             {/* Proof of Payment Section */}
             {isDeposit && (
               <div className="mt-4 pt-4 border-t space-y-3">
-                <p className="text-xs font-bold text-gray-700 uppercase">Proof of Payment</p>
+                <p className="text-xs font-bold text-gray-700 uppercase">
+                  {t('receipt.proof_of_payment', 'Proof of Payment')}
+                </p>
 
                 {uploadError && (
                   <div className="p-2 bg-red-100 text-red-700 text-xs rounded border border-red-200">
@@ -374,7 +390,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
                 {uploadSuccess && (
                   <div className="p-2 bg-green-100 text-green-700 text-xs rounded border border-green-200">
-                    Proof submitted successfully! Awaiting admin review.
+                    {t('receipt.upload_success', 'Proof submitted successfully! Awaiting admin review.')}
                   </div>
                 )}
 
@@ -383,7 +399,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                     <div className="relative rounded-lg border overflow-hidden bg-gray-50">
                       <img
                         src={previewUrl || transaction.proofOfPayment}
-                        alt="Proof of Payment"
+                        alt={t('receipt.proof_of_payment', 'Proof of Payment')}
                         className="w-full max-h-48 object-contain py-2"
                       />
                     </div>
@@ -395,7 +411,9 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                         disabled={uploading}
                         className="w-full py-2 bg-blue-600 text-white rounded-md text-xs font-semibold hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 transition shadow-sm cursor-pointer"
                       >
-                        {uploading ? 'Uploading Receipt...' : 'Submit Proof of Payment'}
+                        {uploading
+                          ? t('receipt.uploading', 'Uploading Receipt...')
+                          : t('receipt.submit_proof', 'Submit Proof of Payment')}
                       </button>
                     )}
 
@@ -408,7 +426,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                         }}
                         className="text-xs text-red-600 hover:underline block cursor-pointer"
                       >
-                        Change receipt image
+                        {t('receipt.change_receipt', 'Change receipt image')}
                       </button>
                     )}
                   </div>
@@ -422,7 +440,9 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                     />
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 italic">No receipt attached.</p>
+                  <p className="text-xs text-gray-400 italic">
+                    {t('receipt.no_receipt_attached', 'No receipt attached.')}
+                  </p>
                 )}
               </div>
             )}
@@ -436,14 +456,14 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
             onClick={() => window.print()}
             className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium transition text-sm cursor-pointer"
           >
-            Print Receipt
+            {t('receipt.print', 'Print Receipt')}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="flex-1 py-2 px-4 bg-gray-800 text-white rounded-md hover:bg-gray-900 font-medium transition text-sm cursor-pointer"
           >
-            Close
+            {t('receipt.close', 'Close')}
           </button>
         </div>
 

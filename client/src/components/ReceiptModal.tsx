@@ -26,7 +26,7 @@ interface DynamicPaymentSettings {
   accountNumber?: string;
   accountHolderName?: string;
   walletAddress?: string;
-  address?: string; // Fallback for backend variations
+  address?: string;
   network?: string;
 }
 
@@ -35,6 +35,14 @@ interface ReceiptModalProps {
   onClose: () => void;
   onProofUploaded?: (updatedTx: Transaction) => void;
 }
+
+const SUPPORTED_CRYPTOS = [
+  { id: 'usdt', label: 'USDT (Tether)' },
+  { id: 'btc', label: 'Bitcoin (BTC)' },
+  { id: 'eth', label: 'Ethereum (ETH)' },
+  { id: 'sol', label: 'Solana (SOL)' },
+  { id: 'usdc', label: 'USD Coin (USDC)' },
+];
 
 export default function ReceiptModal({ transaction, onClose, onProofUploaded }: ReceiptModalProps) {
   if (!transaction) return null;
@@ -46,6 +54,9 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   const isBankTransfer = methodUpper === 'BANK_TRANSFER' || methodUpper === 'BANK';
   const isCrypto = !isBankTransfer;
 
+  const [selectedCrypto, setSelectedCrypto] = useState<string>(
+    transaction.paymentMethod && !isBankTransfer ? transaction.paymentMethod.toLowerCase() : 'usdt'
+  );
   const [paymentSettings, setPaymentSettings] = useState<DynamicPaymentSettings | null>(null);
   const [loadingSettings, setLoadingSettings] = useState<boolean>(false);
 
@@ -59,30 +70,35 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // Fetch admin configured payment settings for this transaction's method
+  // Fetch admin configured payment settings for selected payment method/crypto
   const fetchSettings = useCallback(async () => {
-    if (!isDeposit || !transaction.paymentMethod) return;
+    if (!isDeposit) return;
 
     setLoadingSettings(true);
+    const queryType = isCrypto ? selectedCrypto : transaction.paymentMethod;
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
     try {
-      const queryMethod = encodeURIComponent(transaction.paymentMethod.toLowerCase());
-      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`);
+      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${encodeURIComponent(queryType.toLowerCase())}`);
       if (res.ok) {
         const data = await res.json();
         if (data.settings) {
           setPaymentSettings(data.settings);
-        } else if (data.walletAddress || data.address) {
-          // Fallback if settings object isn't nested
+        } else if (data.walletAddress || data.address || data.bankName) {
           setPaymentSettings(data);
+        } else {
+          setPaymentSettings(null);
         }
+      } else {
+        setPaymentSettings(null);
       }
     } catch (err) {
       console.error('Failed to load payment settings:', err);
+      setPaymentSettings(null);
     } finally {
       setLoadingSettings(false);
     }
-  }, [isDeposit, transaction?.paymentMethod]);
+  }, [isDeposit, isCrypto, selectedCrypto, transaction?.paymentMethod]);
 
   useEffect(() => {
     fetchSettings();
@@ -109,7 +125,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     try {
       let processableFile = file;
 
-      // Check for HEIC/HEIF format
       const isHeic =
         file.type === 'image/heic' ||
         file.type === 'image/heif' ||
@@ -206,7 +221,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
-  // Extract payment details with multi-field fallback handling
   const displayWalletAddress =
     paymentSettings?.walletAddress ||
     paymentSettings?.address ||
@@ -275,35 +289,54 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
             {/* Dynamic Crypto Payment Destination */}
             {isCrypto && isDeposit && (
-              <div className="border-t pt-3 space-y-2">
+              <div className="border-t pt-3 space-y-3">
+                {/* Select Crypto Dropdown */}
+                <div className="flex justify-between items-center">
+                  <label htmlFor="crypto-select" className="text-gray-500 text-sm font-medium">
+                    Select Crypto
+                  </label>
+                  <select
+                    id="crypto-select"
+                    value={selectedCrypto}
+                    onChange={(e) => setSelectedCrypto(e.target.value)}
+                    className="px-2.5 py-1 text-xs border border-gray-300 rounded-md bg-white font-medium text-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                  >
+                    {SUPPORTED_CRYPTOS.map((crypto) => (
+                      <option key={crypto.id} value={crypto.id}>
+                        {crypto.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {loadingSettings ? (
-                  <div className="h-10 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-12 bg-gray-100 rounded animate-pulse" />
                 ) : (
-                  <>
+                  <div className="bg-gray-50 p-3 rounded-lg border space-y-2">
                     {displayNetwork && (
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-500 text-sm">Network</span>
-                        <span className="font-medium text-gray-800">{displayNetwork}</span>
+                        <span className="text-gray-500 text-xs">Network</span>
+                        <span className="font-semibold text-xs text-gray-800">{displayNetwork}</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center gap-4">
-                      <span className="text-gray-500 text-sm">Deposit Wallet</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-gray-500 text-xs">Deposit Address</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-medium text-gray-800 bg-white border px-2 py-0.5 rounded select-all truncate max-w-[140px]">
                           {displayWalletAddress}
                         </span>
                         {displayWalletAddress !== 'N/A' && (
                           <button
                             type="button"
                             onClick={() => handleCopy(displayWalletAddress)}
-                            className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 active:bg-gray-400 rounded transition cursor-pointer"
+                            className="px-2 py-0.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 border border-blue-200 rounded transition cursor-pointer"
                           >
                             {copied ? 'Copied!' : 'Copy'}
                           </button>
                         )}
                       </div>
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             )}

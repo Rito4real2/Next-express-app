@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useIsMounted } from '@/hooks/useIsMounted';
@@ -10,10 +10,34 @@ export default function NavigationPage() {
   const { t, i18n } = useTranslation();
   const isMounted = useIsMounted();
 
+  // 1. Maintain reactive state for selected language
+  const [selectedLang, setSelectedLang] = useState<string>('en');
+
+  // 2. Keep state in sync with i18n instance on mount and when language changes
+  useEffect(() => {
+    if (i18n.language) {
+      setSelectedLang(i18n.language);
+    }
+
+    const handleLanguageChange = (lng: string) => {
+      setSelectedLang(lng);
+    };
+
+    i18n.on('languageChanged', handleLanguageChange);
+
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, [i18n]);
+
   const toggleMenu = () => setIsOpen((prev) => !prev);
 
-  // Safely resolve active language on client vs server default
-  const currentLanguage = isMounted && i18n.language ? i18n.language : 'en';
+  // 3. Async change handler
+  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    setSelectedLang(newLang); // Optimistic UI update
+    await i18n.changeLanguage(newLang);
+  };
 
   return (
     <div className="w-full">
@@ -95,8 +119,8 @@ export default function NavigationPage() {
             <li className="w-full md:w-auto">
               {isMounted ? (
                 <select
-                  value={currentLanguage}
-                  onChange={(e) => i18n.changeLanguage(e.target.value)}
+                  value={selectedLang}
+                  onChange={handleLanguageChange}
                   className="h-12 px-3 text-black font-mono border-[3px] border-solid border-black bg-white cursor-pointer hover:bg-black hover:text-white transition-colors w-full md:w-auto focus:outline-none"
                 >
                   <option value="en" className="bg-white text-black">

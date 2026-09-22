@@ -298,7 +298,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                     <div className="flex justify-between items-center gap-4">
                       <span className="text-gray-500 text-sm">Deposit Wallet</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
+                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-37.5">
                           {displayWalletAddress}
                         </span>
                         {displayWalletAddress !== 'N/A' && (

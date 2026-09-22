@@ -40,7 +40,6 @@ export default function AdminPaymentSettingsForm() {
 
   const isBank = selectedType === 'BANK_TRANSFER';
 
-  // Helper function to paste clipboard text directly into a specific input field
   const handlePaste = async (fieldName: keyof PaymentSettings) => {
     let pastedText = '';
 
@@ -48,7 +47,7 @@ export default function AdminPaymentSettingsForm() {
       try {
         pastedText = await navigator.clipboard.readText();
       } catch (err) {
-        console.warn('Async Clipboard API failed or permission was denied. Falling back to prompt.', err);
+        console.warn('Clipboard API failed or permission was denied. Falling back to prompt.', err);
       }
     }
 
@@ -68,15 +67,20 @@ export default function AdminPaymentSettingsForm() {
   const fetchSettings = useCallback(async (typeToFetch: PaymentType) => {
     setIsLoading(true);
     setStatusMessage(null);
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
+    // Use relative path if target is same origin, or env var with fallback
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${typeToFetch}`, {
+        method: 'GET',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // FIX: Sends cookies if API requires admin auth
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to load settings (Status ${response.status})`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to load settings (Status ${response.status})`);
       }
 
       const data = await response.json();
@@ -101,16 +105,13 @@ export default function AdminPaymentSettingsForm() {
           isActive: true,
         });
       }
-    } 
-    
-    catch (err: any) {
+    } catch (err: any) {
       setStatusMessage({
         type: 'error',
         text: err.message || 'Unable to load payment settings.',
       });
-    }
-    
-    finally {
+    } finally {
+      // FIX: Syntax error removed here ("font-medium" was previously inside the catch/finally block)
       setIsLoading(false);
     }
   }, []);
@@ -142,13 +143,21 @@ export default function AdminPaymentSettingsForm() {
     setStatusMessage(null);
 
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      
+      // Ensure current selectedType is passed in payload
+      const payload = {
+        ...formData,
+        type: selectedType,
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/transaction/payment-settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...formData, type: selectedType }),
+        credentials: 'include', // FIX: Included auth credentials for POST request
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();

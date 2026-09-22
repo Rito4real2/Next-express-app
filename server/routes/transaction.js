@@ -12,12 +12,22 @@ const { requireAdmin, requireAuth } = require('../middleware/auth');
 // GET Route to fetch settings by payment type
 router.get('/payment-settings', requireAuth, async (req, res) => {
   try {
-    const { type = 'BANK_TRANSFER' } = req.query;
-    const settings = await PaymentSetting.findOne({ type });
+    const rawType = req.query.type || 'BANK_TRANSFER';
+    // Standardize query to UPPERCASE to prevent case mismatch
+    const type = rawType.trim().toUpperCase();
 
-    res.status(200).json({ settings: settings || null });
+    // Perform case-insensitive search as a fallback
+    const settings = await PaymentSetting.findOne({
+      type: { $regex: new RegExp(`^${type}$`, 'i') }
+    });
+
+    return res.status(200).json({
+      success: true,
+      settings: settings || null,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching payment settings:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -25,7 +35,7 @@ router.get('/payment-settings', requireAuth, async (req, res) => {
 router.post('/payment-settings', requireAuth, requireAdmin, async (req, res) => {
   try {
     const {
-      type = 'BANK_TRANSFER',
+      type: rawType = 'BANK_TRANSFER',
       bankName,
       accountNumber,
       accountHolderName,
@@ -34,7 +44,10 @@ router.post('/payment-settings', requireAuth, requireAdmin, async (req, res) => 
       isActive,
     } = req.body;
 
-    // Upsert by matching 'type'
+    // Standardize to uppercase for storage
+    const type = rawType.trim().toUpperCase();
+
+    // Upsert by matching standardized 'type'
     const settings = await PaymentSetting.findOneAndUpdate(
       { type },
       {
@@ -49,12 +62,14 @@ router.post('/payment-settings', requireAuth, requireAdmin, async (req, res) => 
       { new: true, upsert: true, runValidators: true }
     );
 
-    res.status(200).json({
+    return res.status(200).json({
+      success: true,
       message: `${type} payment settings updated successfully`,
       settings,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error updating payment settings:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 

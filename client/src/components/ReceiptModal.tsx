@@ -61,28 +61,37 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
   // Fetch admin configured payment settings for this transaction's method
   const fetchSettings = useCallback(async () => {
-    if (!isDeposit || !transaction.paymentMethod) return;
+  if (!isDeposit || !transaction.paymentMethod) return;
 
-    setLoadingSettings(true);
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    try {
-      const queryMethod = encodeURIComponent(transaction.paymentMethod.toLowerCase());
-      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.settings) {
-          setPaymentSettings(data.settings);
-        } else if (data.walletAddress || data.address) {
-          // Fallback if settings object isn't nested
-          setPaymentSettings(data);
-        }
+  setLoadingSettings(true);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  
+  try {
+    // Send normalized UPPERCASE type parameter to match database enum/string
+    const queryMethod = encodeURIComponent(transaction.paymentMethod.trim().toUpperCase());
+    
+    const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Ensures auth cookies/tokens pass if requireAuth middleware is active
+    });
+    
+    if (res.ok) {
+      const responseData = await res.json();
+      if (responseData.settings) {
+        setPaymentSettings(responseData.settings);
       }
-    } catch (err) {
-      console.error('Failed to load payment settings:', err);
-    } finally {
-      setLoadingSettings(false);
+    } else {
+      console.error('Payment settings request failed with status:', res.status);
     }
-  }, [isDeposit, transaction?.paymentMethod]);
+  } catch (err) {
+    console.error('Failed to load payment settings:', err);
+  } finally {
+    setLoadingSettings(false);
+  }
+}, [isDeposit, transaction?.paymentMethod]);
 
   useEffect(() => {
     fetchSettings();

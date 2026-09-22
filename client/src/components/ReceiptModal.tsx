@@ -26,6 +26,7 @@ interface DynamicPaymentSettings {
   accountNumber?: string;
   accountHolderName?: string;
   walletAddress?: string;
+  address?: string; // Fallback for backend variations
   network?: string;
 }
 
@@ -38,10 +39,10 @@ interface ReceiptModalProps {
 export default function ReceiptModal({ transaction, onClose, onProofUploaded }: ReceiptModalProps) {
   if (!transaction) return null;
 
-  const isDeposit = transaction.type.toUpperCase() === 'DEPOSIT';
-  const isPending = transaction.status.toUpperCase() === 'PENDING';
+  const isDeposit = transaction.type?.toUpperCase() === 'DEPOSIT';
+  const isPending = transaction.status?.toUpperCase() === 'PENDING';
 
-  const methodUpper = transaction.paymentMethod.toUpperCase();
+  const methodUpper = transaction.paymentMethod?.toUpperCase() || '';
   const isBankTransfer = methodUpper === 'BANK_TRANSFER' || methodUpper === 'BANK';
   const isCrypto = !isBankTransfer;
 
@@ -60,16 +61,20 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
   // Fetch admin configured payment settings for this transaction's method
   const fetchSettings = useCallback(async () => {
-    if (!isDeposit) return;
+    if (!isDeposit || !transaction.paymentMethod) return;
 
     setLoadingSettings(true);
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     try {
-      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${transaction.paymentMethod}`);
+      const queryMethod = encodeURIComponent(transaction.paymentMethod.toLowerCase());
+      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`);
       if (res.ok) {
         const data = await res.json();
         if (data.settings) {
           setPaymentSettings(data.settings);
+        } else if (data.walletAddress || data.address) {
+          // Fallback if settings object isn't nested
+          setPaymentSettings(data);
         }
       }
     } catch (err) {
@@ -188,7 +193,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   };
 
   const getStatusBadgeColor = (status: Transaction['status']) => {
-    switch (status.toUpperCase()) {
+    switch (status?.toUpperCase()) {
       case 'APPROVED':
       case 'COMPLETED':
         return 'bg-green-100 text-green-800 border-green-300';
@@ -201,9 +206,13 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
-  // Determine fallback details if dynamic API record does not exist
+  // Extract payment details with multi-field fallback handling
   const displayWalletAddress =
-    paymentSettings?.walletAddress || transaction.walletAddress || 'N/A';
+    paymentSettings?.walletAddress ||
+    paymentSettings?.address ||
+    transaction.walletAddress ||
+    'N/A';
+
   const displayNetwork = paymentSettings?.network || '';
 
   const displayBankName =
@@ -241,7 +250,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
           <div className="text-center py-2 border-b">
             <span className="text-xs uppercase text-gray-500 font-medium">Amount</span>
             <div className={`text-3xl font-extrabold ${isDeposit ? 'text-green-600' : 'text-red-600'}`}>
-              {isDeposit ? '+' : '-'}${transaction.amount.toFixed(2)}
+              {isDeposit ? '+' : '-'}${transaction.amount ? transaction.amount.toFixed(2) : '0.00'}
             </div>
           </div>
 
@@ -255,7 +264,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
             <div className="flex justify-between items-center">
               <span className="text-gray-500">Status</span>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadgeColor(transaction.status)}`}>
-                {transaction.status.toUpperCase()}
+                {transaction.status?.toUpperCase()}
               </span>
             </div>
 
@@ -268,7 +277,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
             {isCrypto && isDeposit && (
               <div className="border-t pt-3 space-y-2">
                 {loadingSettings ? (
-                  <div className="h-6 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-10 bg-gray-100 rounded animate-pulse" />
                 ) : (
                   <>
                     {displayNetwork && (
@@ -339,7 +348,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
             <div className="flex justify-between items-center border-t pt-3">
               <span className="text-gray-500">Date & Time</span>
               <span className="font-medium text-gray-800">
-                {new Date(transaction.createdAt).toLocaleString()}
+                {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : 'N/A'}
               </span>
             </div>
 

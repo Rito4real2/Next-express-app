@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import UserLogoutButton from './UserLogoutButton';
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 import TransactionHistoryTable from '@/components/TransactionHistoryTable';
+import ProfileDashboardClient from './ProfileDashboardClient';
 
 interface UserProfile {
   _id: string;
@@ -40,11 +41,7 @@ async function getDashboardData(): Promise<{ user: UserProfile; transactions: Tr
     if (!profileRes.ok) return null;
 
     const user = await profileRes.json();
-    
-    // DEBUG LOGS (Check your terminal running 'npm run dev')
-    console.log('Transaction Fetch Status:', txRes.status);
     const txData = txRes.ok ? await txRes.json() : null;
-    console.log('Raw Transaction Data from Backend:', txData);
 
     let rawTransactions: Transaction[] = [];
 
@@ -52,7 +49,6 @@ async function getDashboardData(): Promise<{ user: UserProfile; transactions: Tr
       if (Array.isArray(txData)) {
         rawTransactions = txData;
       } else if (typeof txData === 'object') {
-        // Unwraps nested properties common in Mongoose responses
         rawTransactions = 
           txData.transactions || 
           txData.data || 
@@ -84,65 +80,15 @@ export default async function UserDashboard() {
 
       <main className="p-6">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between bg-white p-6 rounded-lg border shadow-sm">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">
-                Welcome back, {user.fullName}!
-              </h1>
-              <p className="text-sm text-gray-500">@{user.userName}</p>
-            </div>
+          
+          {/* Header & Stats Client Wrapper */}
+          <ProfileDashboardClient user={user}>
             <UserLogoutButton />
-          </div>
-
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <p className="text-sm font-medium text-gray-500">Account Balance</p>
-              <p className="text-3xl font-bold text-green-600 mt-1">
-                ${user.balance.toLocaleString()}
-              </p>
-              <div className="mt-4 flex gap-2">
-                <Link 
-                  href="/users/deposit"
-                  className="px-4 py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition inline-block text-center text-sm"
-                >
-                  Deposit Funds
-                </Link>
-                <Link 
-                  href="/users/withdraw"
-                  className="px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition inline-block text-center text-sm"
-                >
-                  Withdraw Funds
-                </Link>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <p className="text-sm font-medium text-gray-500">Account Type</p>
-              <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm font-semibold capitalize">
-                {user.role}
-              </span>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg border shadow-sm">
-              <p className="text-sm font-medium text-gray-500">Email Address</p>
-              <p className="text-lg font-semibold text-gray-800 mt-1 truncate">
-                {user.emailAddress}
-              </p>
-            </div>
-          </div>
+          </ProfileDashboardClient>
 
           {/* Transaction History Section */}
           <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-800">Transaction History</h2>
-              <span className="text-xs text-gray-500">
-                Total Logs: {transactions.length}
-              </span>
-            </div>
-
-            {/* Client Component handling table layout & Receipt Modal trigger */}
+            {/* Client Component handling table layout & translations */}
             <TransactionHistoryTable transactions={transactions} />
           </div>
 

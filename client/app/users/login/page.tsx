@@ -2,8 +2,10 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
+import '@/public/i18n'; // Force i18n instance initialization safely
 
 export default function UserLoginPage() {
   const [identifier, setIdentifier] = useState('');
@@ -12,6 +14,7 @@ export default function UserLoginPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const { t } = useTranslation();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,7 +32,7 @@ export default function UserLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Login failed');
+        setError(data.error || t('auth.login_failed', 'Login failed'));
         return;
       }
 
@@ -37,7 +40,7 @@ export default function UserLoginPage() {
       router.push('/users/profile');
       
     } catch (err) {
-      setError('Server connection error. Please try again.');
+      setError(t('auth.server_error', 'Server connection error. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -48,8 +51,12 @@ export default function UserLoginPage() {
       <Navbar />
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sign In to Your Account</h1>
-          <p className="text-sm text-gray-500 mt-1">Enter your credentials to access your portal.</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t('auth.login_title', 'Sign In to Your Account')}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            {t('auth.login_subtitle', 'Enter your credentials to access your portal.')}
+          </p>
         </div>
 
         {error && (
@@ -61,20 +68,22 @@ export default function UserLoginPage() {
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Email Address or Username
+              {t('auth.identifier_label', 'Email Address or Username')}
             </label>
             <input
               type="text"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               className="w-full p-2 border rounded mt-1 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="user@example.com or jondoe"
+              placeholder={t('auth.identifier_placeholder', 'user@example.com or jondoe')}
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('auth.password_label', 'Password')}
+            </label>
             <input
               type="password"
               value={password}
@@ -90,14 +99,17 @@ export default function UserLoginPage() {
             disabled={loading}
             className="w-full py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Sign In'}
+            {loading 
+              ? t('auth.logging_in', 'Logging in...') 
+              : t('auth.sign_in', 'Sign In')
+            }
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-600">
-          Don't have an account?{' '}
+          {t('auth.no_account', "Don't have an account?")}{' '}
           <Link href="/users/register" className="text-blue-600 font-medium hover:underline">
-            Register here
+            {t('auth.register_here', 'Register here')}
           </Link>
         </p>
       </div>

@@ -5,10 +5,19 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 
+const CRYPTO_OPTIONS = [
+  { id: 'USDT', label: 'USDT (Tether)' },
+  { id: 'BTC', label: 'Bitcoin (BTC)' },
+  { id: 'ETH', label: 'Ethereum (ETH)' },
+  { id: 'SOL', label: 'Solana (SOL)' },
+  { id: 'USDC', label: 'USD Coin (USDC)' },
+];
+
 export default function DepositPage() {
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Credit/Debit Card');
-  
+  const [selectedCrypto, setSelectedCrypto] = useState('USDT');
+
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,6 +34,9 @@ export default function DepositPage() {
     setStatus(null);
     setError(null);
 
+    // Send specific crypto currency code if payment method is CRYPTO
+    const effectivePaymentMethod = paymentMethod === 'CRYPTO' ? selectedCrypto : paymentMethod;
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/transaction/deposit`, {
         method: 'POST',
@@ -32,7 +44,7 @@ export default function DepositPage() {
         credentials: 'include',
         body: JSON.stringify({
           amount: Number(amount),
-          paymentMethod,
+          paymentMethod: effectivePaymentMethod,
         }),
       });
 
@@ -91,9 +103,27 @@ export default function DepositPage() {
             >
               <option value="Credit/Debit Card">Credit / Debit Card</option>
               <option value="BANK_TRANSFER">Bank Transfer</option>
-              <option value="CRYPTO">Crypto (USDT)</option>
+              <option value="CRYPTO">Crypto</option>
             </select>
           </div>
+
+          {/* Conditional Crypto Selection Tag */}
+          {paymentMethod === 'CRYPTO' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Select Cryptocurrency</label>
+              <select
+                value={selectedCrypto}
+                onChange={(e) => setSelectedCrypto(e.target.value)}
+                className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
+              >
+                {CRYPTO_OPTIONS.map((crypto) => (
+                  <option key={crypto.id} value={crypto.id}>
+                    {crypto.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Amount ($)</label>
@@ -112,7 +142,7 @@ export default function DepositPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition disabled:opacity-50"
+            className="w-full py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Submitting...' : 'Submit Deposit Request'}
           </button>

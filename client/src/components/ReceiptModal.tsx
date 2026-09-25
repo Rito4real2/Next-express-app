@@ -28,7 +28,7 @@ interface DynamicPaymentSettings {
   accountNumber?: string;
   accountHolderName?: string;
   walletAddress?: string;
-  address?: string; // Fallback for backend variations
+  address?: string;
   network?: string;
 }
 
@@ -41,12 +41,10 @@ interface ReceiptModalProps {
 export default function ReceiptModal({ transaction, onClose, onProofUploaded }: ReceiptModalProps) {
   const { t, i18n } = useTranslation();
 
-  if (!transaction) return null;
+  const isDeposit = transaction?.type?.toUpperCase() === 'DEPOSIT';
+  const isPending = transaction?.status?.toUpperCase() === 'PENDING';
 
-  const isDeposit = transaction.type?.toUpperCase() === 'DEPOSIT';
-  const isPending = transaction.status?.toUpperCase() === 'PENDING';
-
-  const methodUpper = transaction.paymentMethod?.toUpperCase() || '';
+  const methodUpper = transaction?.paymentMethod?.toUpperCase() || '';
   const isBankTransfer = methodUpper === 'BANK_TRANSFER' || methodUpper === 'BANK';
   const isCrypto = !isBankTransfer;
 
@@ -58,20 +56,29 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
 
   // File Upload State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(transaction.proofOfPayment || null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // Fetch admin configured payment settings for this transaction's method
+  // Keep preview state aligned with incoming transaction prop
+  useEffect(() => {
+    if (transaction) {
+      setPreviewUrl(transaction.proofOfPayment || null);
+      setSelectedFile(null);
+      setUploadError(null);
+      setUploadSuccess(false);
+    }
+  }, [transaction]);
+
+  // Fetch admin-configured payment settings
   const fetchSettings = useCallback(async () => {
-    if (!isDeposit || !transaction.paymentMethod) return;
+    if (!isDeposit || !transaction?.paymentMethod) return;
 
     setLoadingSettings(true);
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
     try {
-      // Send normalized UPPERCASE type parameter to match database enum/string
       const queryMethod = encodeURIComponent(transaction.paymentMethod.trim().toUpperCase());
 
       const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`, {
@@ -79,7 +86,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Ensures auth cookies/tokens pass if requireAuth middleware is active
+        credentials: 'include',
       });
 
       if (res.ok) {
@@ -98,19 +105,27 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   }, [isDeposit, transaction?.paymentMethod]);
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    if (transaction) {
+      fetchSettings();
+    }
+  }, [fetchSettings, transaction]);
+
+  if (!transaction) return null;
 
   const handleCopy = (address: string) => {
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleCopyAccount = (accountNumber: string) => {
-    navigator.clipboard.writeText(accountNumber);
-    setCopiedAcc(true);
-    setTimeout(() => setCopiedAcc(false), 2000);
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(accountNumber);
+      setCopiedAcc(true);
+      setTimeout(() => setCopiedAcc(false), 2000);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,14 +137,14 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     try {
       let processableFile = file;
 
-      // Check for HEIC/HEIF format
       const isHeic =
         file.type === 'image/heic' ||
         file.type === 'image/heif' ||
         file.name.toLowerCase().endsWith('.heic') ||
         file.name.toLowerCase().endsWith('.heif');
 
-      if (isHeic) {
+      // Safely import HEIC converter only in the browser context
+      if (isHeic && typeof window !== 'undefined') {
         const heic2any = (await import('heic2any')).default;
         const convertedBlob = (await heic2any({
           blob: file,
@@ -221,7 +236,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
-  // Extract payment details with multi-field fallback handling
   const displayWalletAddress =
     paymentSettings?.walletAddress ||
     paymentSettings?.address ||
@@ -310,7 +324,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                     <div className="flex justify-between items-center gap-4">
                       <span className="text-gray-500 text-sm">{t('receipt.deposit_wallet', 'Deposit Wallet')}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-37.5">
+                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
                           {displayWalletAddress}
                         </span>
                         {displayWalletAddress !== t('common.not_applicable', 'N/A') && (
@@ -453,7 +467,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         <div className="bg-gray-50 border-t p-4 flex gap-3">
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => typeof window !== 'undefined' && window.print()}
             className="flex-1 py-2 px-4 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 font-medium transition text-sm cursor-pointer"
           >
             {t('receipt.print', 'Print Receipt')}

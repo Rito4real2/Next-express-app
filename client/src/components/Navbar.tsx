@@ -70,7 +70,7 @@ export default function Navbar() {
   };
 
   return (
-    <header className="w-full flex justify-center p-4">
+    <header className="w-full flex justify-center bg-gray-100">
       <nav className="w-full max-w-6xl flex flex-wrap items-center justify-between border-2 border-solid border-[#ddd] p-5 bg-white relative">
         
         {/* Brand */}

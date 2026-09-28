@@ -28,33 +28,9 @@ export default function DepositPage() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const router = useRouter();
-  const { t, i18n } = useTranslation();
-  const [selectedLang, setSelectedLang] = useState<string>('en');
+  const { t } = useTranslation();
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-  // Keep selectedLang in sync with i18n instance on mount and upon language change
-  useEffect(() => {
-    if (i18n.language) {
-      setSelectedLang(i18n.language);
-    }
-
-    const handleLanguageChange = (lng: string) => {
-      setSelectedLang(lng);
-    };
-
-    i18n.on('languageChanged', handleLanguageChange);
-
-    return () => {
-      i18n.off('languageChanged', handleLanguageChange);
-    };
-  }, [i18n]);
-
-  const handleLanguageSelect = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLang = e.target.value;
-    setSelectedLang(newLang); // Optimistic UI update
-    await i18n.changeLanguage(newLang);
-  };
 
   const handleDeposit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -116,7 +92,7 @@ export default function DepositPage() {
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">{t('deposit.title', 'Deposit Funds')}</h1>
 
-          {/* Language Switcher Dropdown */}
+          {/* Language Switcher Dropdown
           <select
             value={selectedLang}
             onChange={handleLanguageSelect}
@@ -125,7 +101,7 @@ export default function DepositPage() {
             <option value="en">EN</option>
             <option value="es">ES</option>
             <option value="fr">FR</option>
-          </select>
+          </select> */}
         </div>
 
         {status && (

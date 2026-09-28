@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import '@/public/i18n'; // Force i18n instance initialization safely
 import { useTranslation } from 'react-i18next';
-
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -22,7 +21,26 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  
+  const [selectedLang, setSelectedLang] = useState<string>('en');
+
+  // Keep selectedLang in sync with i18n instance on mount and upon language change
+  useEffect(() => {
+    if (i18n.language) {
+      setSelectedLang(i18n.language);
+    }
+
+    const onLanguageChange = (lng: string) => {
+      setSelectedLang(lng);
+    };
+
+    i18n.on('languageChanged', onLanguageChange);
+
+    return () => {
+      i18n.off('languageChanged', onLanguageChange);
+    };
+  }, [i18n]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -52,7 +70,6 @@ export default function RegisterPage() {
     try {
       const { confirmPassword, ...payload } = formData;
 
-      // Ensure API destination points correctly to your server port if rewrites aren't used
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
       const res = await fetch(`${backendUrl}/api/users/register`, {
@@ -78,15 +95,33 @@ export default function RegisterPage() {
     }
   };
 
+  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    setSelectedLang(newLang); // Optimistic UI update
+    await i18n.changeLanguage(newLang);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-      <Navbar />
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('auth.create_account', 'Create an Account')}</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            {t('auth.register_subtitle', 'Sign up to get started with your account.')}
-          </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{t('auth.create_account', 'Create an Account')}</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              {t('auth.register_subtitle', 'Sign up to get started with your account.')}
+            </p>
+          </div>
+          
+          {/* Language Selector */}
+          <select 
+            value={selectedLang} 
+            onChange={handleLanguageChange}
+            className="text-sm border rounded p-1 text-gray-700 bg-white"
+          >
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="fr">FR</option>
+          </select>
         </div>
 
         {error && (
@@ -117,7 +152,7 @@ export default function RegisterPage() {
               value={formData.userName}
               onChange={handleChange}
               className="w-full p-2 border rounded mt-1 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t('auth.username_placeholder', 'johndoe')}
+              placeholder={t('auth.user_name_placeholder', 'johndoe')}
               required
             />
           </div>
@@ -150,7 +185,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('auth.password', 'Password')} </label>
+            <label className="block text-sm font-medium text-gray-700">{t('auth.password', 'Password')}</label>
             <input
               type="password"
               name="password"
@@ -186,6 +221,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-gray-600">
           {t('auth.already_have_account', 'Already have an account?')}
+          {" "}
           <Link
             href="/users/login"
             className="text-blue-600 font-medium hover:underline"

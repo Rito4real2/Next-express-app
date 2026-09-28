@@ -2,7 +2,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 import UserLogoutButton from './UserLogoutButton';
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 import TransactionHistoryTable from '@/components/TransactionHistoryTable';
@@ -76,7 +75,6 @@ export default async function UserDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
 
       <main className="p-6">
         <div className="max-w-4xl mx-auto space-y-6">

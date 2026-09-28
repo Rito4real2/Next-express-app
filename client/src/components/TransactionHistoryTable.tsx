@@ -47,7 +47,11 @@ export default function TransactionHistoryTable({ transactions = [] }: Props) {
                 <td className="p-3 font-bold">
                   ${typeof tx.amount === 'number' ? tx.amount.toFixed(2) : tx.amount}
                 </td>
-                <td className="p-3">{tx.paymentMethod || t('common.not_applicable', 'N/A')}</td>
+                <td className="p-3">
+                  <span className={tx.paymentMethod || t('common.not_applicable', 'N/A')}>
+                    {t(`transactions.paymentMethod.${tx.paymentMethod?.toLowerCase()}`, tx.paymentMethod || t('common.not_applicable', 'N/A'))}
+                  </span>
+                </td>
                 <td className="p-3">
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-semibold ${

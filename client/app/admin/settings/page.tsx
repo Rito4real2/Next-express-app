@@ -1,12 +1,10 @@
 import ProfileForm from '@/components/ProfileForm';
-import AdminNavbar from '@/components/AdminNavbar';
 import Link from 'next/link';
 
 export default function UserSettingsPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="bg-gray-100 rounded-lg border shadow-sm p-6">
-        <AdminNavbar />
       </div>
       <div className="max-w-4xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-gray-800">Admin Settings</h1>

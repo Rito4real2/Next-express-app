@@ -64,7 +64,6 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <AdminNavbar/>
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between border-b pb-4">
           <div>

@@ -3,7 +3,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Navbar from '@/components/Navbar';
 import '@/public/i18n'; // Force i18n instance initialization safely
 import { useTranslation } from 'react-i18next';
 
@@ -111,17 +110,6 @@ export default function RegisterPage() {
               {t('auth.register_subtitle', 'Sign up to get started with your account.')}
             </p>
           </div>
-          
-          {/* Language Selector */}
-          <select 
-            value={selectedLang} 
-            onChange={handleLanguageChange}
-            className="text-sm border rounded p-1 text-gray-700 bg-white"
-          >
-            <option value="en">EN</option>
-            <option value="es">ES</option>
-            <option value="fr">FR</option>
-          </select>
         </div>
 
         {error && (

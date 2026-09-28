@@ -25,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className={`${geistMono.variable} font-mono antialiased`}>
         <I18nProvider>
           <ConditionalNavbar />
           <main>{children}</main>

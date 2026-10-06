@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import '@/public/i18n';
+import '../../lib/locales/i18n';
 
 interface ProofModalProps {
   imageUrl: string;

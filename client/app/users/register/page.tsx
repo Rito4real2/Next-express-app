@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import '@/public/i18n'; // Force i18n instance initialization safely
+import '../../../lib/locales/i18n'; // Force i18n instance initialization safely
 import { useTranslation } from 'react-i18next';
 
 export default function RegisterPage() {

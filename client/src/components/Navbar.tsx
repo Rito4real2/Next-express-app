@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useIsMounted } from '@/hooks/useIsMounted';
-import '@/public/i18n'; // Force i18n instance initialization safely
+import '../../lib/locales/i18n'; // Force i18n instance initialization safely
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);

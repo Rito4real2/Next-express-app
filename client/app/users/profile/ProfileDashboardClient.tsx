@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import '@/public/i18n';
+import '../../../lib/locales/i18n';
 
 interface UserProfile {
   _id: string;

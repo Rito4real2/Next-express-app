@@ -4,7 +4,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
-import '@/public/i18n'; // Force i18n instance initialization safely
+import '../../../lib/locales/i18n'; // Force i18n instance initialization safely
 import { useTranslation } from 'react-i18next';
 
 const CRYPTO_OPTIONS = [

@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import '@/public/i18n';
+import '../../lib/locales/i18n';
 
 export interface UserProfile {
   _id: string;

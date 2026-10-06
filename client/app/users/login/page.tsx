@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
-import '@/public/i18n'; // Force i18n instance initialization safely
+import '../../../lib/locales/i18n'; // Force i18n instance initialization safely
 
 export default function UserLoginPage() {
   const [identifier, setIdentifier] = useState('');
@@ -21,7 +21,8 @@ export default function UserLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/users/login', {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${backendUrl}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

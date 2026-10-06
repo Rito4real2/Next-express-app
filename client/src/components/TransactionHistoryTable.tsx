@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
-import '@/public/i18n';
+import '../../lib/locales/i18n';
 
 interface Props {
   transactions?: Transaction[];

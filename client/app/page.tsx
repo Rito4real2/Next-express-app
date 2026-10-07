@@ -1,20 +1,47 @@
-import React from 'react'
-import image from 'next/image'
-import MarketAnalysis from '@/components/MarketAnalysis'
-import BackgroundSection from '@/components/BackgroundSection'
-import TradingGuide from '@/components/TradingGuide'
-import TradingPlan from '@/components/TradingPlan'
-import Footer from '@/components/Footer'
+// app/page.tsx (or your page component)
+import React from 'react';
+import { AnimatedSection } from '@/components/AnimatedSection';
 
-const page = () => {
+import BackgroundSection from '@/components/BackgroundSection';
+import MarketAnalysis from '@/components/MarketAnalysis';
+import TradingGuide from '@/components/TradingGuide';
+import TradingPlan from '@/components/TradingPlan';
+import SetupSteps from '@/components/SetupSteps';
+import Testimonials from '@/components/Testimonials';
+import Footer from '@/components/Footer';
+
+export default function HomePage() {
   return (
-    <div>
-      <BackgroundSection />
-      <MarketAnalysis />
-      <TradingGuide />
-      <TradingPlan />
-      <Footer />
-    </div>
-  )
+    <main className="overflow-x-hidden">
+      {/* Background Section (animates immediately on load) */}
+      <AnimatedSection>
+        <BackgroundSection />
+      </AnimatedSection>
+
+      {/* Subsequent sections animate as the user scrolls down */}
+      <AnimatedSection>
+        <MarketAnalysis />
+      </AnimatedSection>
+
+      <AnimatedSection>
+        <TradingGuide />
+      </AnimatedSection>
+
+      <AnimatedSection>
+        <TradingPlan />
+      </AnimatedSection>
+
+      <AnimatedSection>
+        <SetupSteps />
+      </AnimatedSection>
+
+      <AnimatedSection>
+        <Testimonials />
+      </AnimatedSection>
+
+      <AnimatedSection>
+        <Footer />
+      </AnimatedSection>
+    </main>
+  );
 }
-export default page

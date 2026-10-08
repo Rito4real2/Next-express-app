@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import UserLogoutButton from './UserLogoutButton';
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 import TransactionHistoryTable from '@/components/TransactionHistoryTable';
@@ -15,6 +16,7 @@ interface UserProfile {
   gender: string;
   balance: number;
   role: 'user' | 'admin';
+  avatarUrl?: string; // Added avatarUrl field
 }
 
 export const dynamic = 'force-dynamic';
@@ -73,14 +75,16 @@ export default async function UserDashboard() {
 
   const { user, transactions } = data;
 
+  // Ensure image URL resolves cleanly with default fallback
+  const userAvatarUrl = user.avatarUrl || '/default-avatar.png';
+
   return (
     <div className="min-h-screen bg-gray-100">
-
       <main className="p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           
-          {/* Header & Stats Client Wrapper */}
-          <ProfileDashboardClient user={user}>
+          {/* Header & Stats Client Wrapper with Avatar URL */}
+          <ProfileDashboardClient user={{ ...user, avatarUrl: userAvatarUrl }}>
             <UserLogoutButton />
           </ProfileDashboardClient>
 

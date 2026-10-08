@@ -5,6 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import '../../../lib/locales/i18n';
+import Image from 'next/image'
 
 interface UserProfile {
   _id: string;
@@ -21,65 +22,34 @@ interface ProfileDashboardClientProps {
   children: React.ReactNode; // For UserLogoutButton
 }
 
-export default function ProfileDashboardClient({ user, children }: ProfileDashboardClientProps) {
-  const { t } = useTranslation();
-
+export default function ProfileDashboardClient({ user, children }: { user: any; children: React.ReactNode }) {
   return (
-    <>
-      {/* Header */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-lg border shadow-sm">
+    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+      
+      {/* User Info + Avatar */}
+      <div className="flex items-center gap-4">
+        
+
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            {t('dashboard.welcome', 'Welcome back, {{name}}!', { name: user.fullName })}
-          </h1>
-          <p className="text-sm text-gray-500">@{user.userName}</p>
+          <h1 className="text-xl font-bold text-gray-900">{user.fullName}</h1>
+          <p className="text-sm font-mono text-gray-500">@{user.userName}</p>
         </div>
+      </div>
+
+      {/* Action / Logout Buttons */}
+      {/* <div className="flex items-center gap-3">
         {children}
-      </div>
+      </div> */}
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg border shadow-sm">
-          <p className="text-sm font-medium text-gray-500">
-            {t('dashboard.account_balance', 'Account Balance')}
-          </p>
-          <p className="text-3xl font-bold text-green-600 mt-1">
-            ${user.balance.toLocaleString()}
-          </p>
-          <div className="mt-4 flex gap-2">
-            <Link 
-              href="/users/deposit"
-              className="px-4 py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition inline-block text-center text-sm"
-            >
-              {t('dashboard.deposit_funds', 'Deposit Funds')}
-            </Link>
-            <Link 
-              href="/users/withdraw"
-              className="px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition inline-block text-center text-sm"
-            >
-              {t('dashboard.withdraw_funds', 'Withdraw Funds')}
-            </Link>
-          </div>
+      <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-black bg-gray-100 shrink-0">
+          <Image
+            src={user.avatarUrl || '/default-avatar.png'}
+            alt={`${user.fullName}'s Avatar`}
+            fill
+            className="object-cover"
+          />
         </div>
 
-        <div className="bg-white p-6 rounded-lg border shadow-sm">
-          <p className="text-sm font-medium text-gray-500">
-            {t('dashboard.account_type', 'Account Type')}
-          </p>
-          <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm font-semibold capitalize">
-            {user.role}
-          </span>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg border shadow-sm">
-          <p className="text-sm font-medium text-gray-500">
-            {t('dashboard.email_address', 'Email Address')}
-          </p>
-          <p className="text-lg font-semibold text-gray-800 mt-1 truncate">
-            {user.emailAddress}
-          </p>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

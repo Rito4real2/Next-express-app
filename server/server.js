@@ -37,6 +37,8 @@ app.use(
   })
 );
 
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
+
 app.use(express.json({limit: '10mb'})); // Increased limit for large payloads
 app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Increased limit for large payloads
 app.use(cookieParser());

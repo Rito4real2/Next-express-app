@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     gender: { type: String, required: true },
     balance: { type: Number, default: 0 },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    avatarUrl: { type: String, default: '' }, // Added avatar field
   },
   { timestamps: true }
 );

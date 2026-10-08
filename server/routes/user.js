@@ -1,20 +1,51 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken'); // Fixed: Added missing import
+const jwt = require('jsonwebtoken');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const User = require('../models/User');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
+
+// --- MULTER STORAGE CONFIGURATION ---
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `avatar-${req.user._id}-${Date.now()}${ext}`);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(null, false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
 
 // POST /api/users/register and login user
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, userName, emailAddress, password, gender, balance, role } = req.body;
+    const { fullName, userName, emailAddress, password, gender, balance, role, avatarUrl } = req.body;
 
-    // Optional: Add basic input verification before DB hit
     if (!fullName || !userName || !emailAddress || !password) {
       return res.status(400).json({ error: 'Please fill in all required fields.' });
     }
 
-    // 1. Create the new user
     const newUser = await User.create({
       fullName,
       userName,
@@ -23,24 +54,22 @@ router.post('/register', async (req, res) => {
       gender,
       balance: balance ?? 0,
       role: role || 'user',
+      avatarUrl: avatarUrl || '',
     });
 
-    // 2. Generate JWT token
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
       process.env.JWT_SECRET || 'fallback_secret',
       { expiresIn: '1d' }
     );
 
-    // 3. Set HTTP-Only cookie
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
-    // 4. Exclude password from payload response
     const userResponse = newUser.toObject();
     delete userResponse.password;
 
@@ -58,16 +87,14 @@ router.post('/register', async (req, res) => {
 });
 
 // USER LOGIN
-// POST /api/users/login
 router.post('/login', async (req, res) => {
   try {
-    const { identifier, password } = req.body; // 'identifier' can be email or username
+    const { identifier, password } = req.body;
 
     if (!identifier || !password) {
       return res.status(400).json({ error: 'Please provide email/username and password' });
     }
 
-    // 1. Check if user exists by matching either emailAddress OR userName
     const user = await User.findOne({
       $or: [
         { emailAddress: identifier.toLowerCase().trim() },
@@ -75,32 +102,26 @@ router.post('/login', async (req, res) => {
       ]
     });
 
-    console.log('user found on db', user)
-
     if (!user) {
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
-    // 2. Compare password using the instance method on your User model
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      console.log('Matching passwords', isMatch)
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
-    // 3. Generate JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    // 4. Send token in HTTP-Only cookie
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({
@@ -111,6 +132,7 @@ router.post('/login', async (req, res) => {
         userName: user.userName,
         emailAddress: user.emailAddress,
         role: user.role,
+        avatarUrl: user.avatarUrl,
       },
     });
   } catch (err) {
@@ -120,27 +142,51 @@ router.post('/login', async (req, res) => {
 
 // --- CURRENT USER ROUTES ---
 
-// GET /api/users/me (or /api/me if mounted at root)
-// Matches Next.js client checkAuth fetch
 router.get('/me', requireAuth, (req, res) => {
   res.json(req.user);
 });
 
-// GET PROFILE (Must be defined BEFORE /:id)
-// GET /api/users/profile
 router.get('/profile', requireAuth, (req, res) => {
   res.json(req.user);
 });
 
-// UPDATE PROFILE (Must be defined BEFORE /:id)
-// PUT /api/users/profile
-router.put('/profile', requireAuth, async (req, res) => {
+// POST /api/users/profile/avatar — Upload or update profile picture
+router.post('/profile/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
-    const { fullName, userName, gender } = req.body;
+    if (!req.file) {
+      return res.status(400).json({ error: 'Please upload an image file.' });
+    }
+
+    // Construct accessible image URL path
+    const avatarUrl = `/uploads/${req.file.filename}`;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      { fullName, userName, gender },
+      { avatarUrl },
+      { new: true }
+    ).select('-password');
+
+    res.json({
+      message: 'Avatar uploaded successfully',
+      avatarUrl: updatedUser.avatarUrl,
+      user: updatedUser,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/users/profile
+router.put('/profile', requireAuth, async (req, res) => {
+  try {
+    const { fullName, userName, gender, avatarUrl } = req.body;
+
+    const updateFields = { fullName, userName, gender };
+    if (avatarUrl !== undefined) updateFields.avatarUrl = avatarUrl;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      updateFields,
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -152,8 +198,6 @@ router.put('/profile', requireAuth, async (req, res) => {
 
 // --- ADMIN-ONLY ROUTES ---
 
-// GET ALL USERS
-// GET /api/users (list all users, admin only)
 router.get('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -163,8 +207,6 @@ router.get('/', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// GET USER BY ID
-// GET /api/users/:id
 router.get('/:id', requireAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
@@ -180,23 +222,20 @@ router.get('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// UPDATE USER BY ID
-// PUT /api/users/:id (Admin update user details)
 router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { fullName, userName, emailAddress, balance, role } = req.body;
+    const { fullName, userName, emailAddress, balance, role, avatarUrl } = req.body;
 
-    // Build sanitised payload to prevent arbitrary schema pollution
     const updateFields = {};
     if (fullName !== undefined) updateFields.fullName = fullName;
     if (userName !== undefined) updateFields.userName = userName;
     if (emailAddress !== undefined) updateFields.emailAddress = emailAddress;
     if (balance !== undefined) updateFields.balance = Number(balance);
+    if (avatarUrl !== undefined) updateFields.avatarUrl = avatarUrl;
     if (role !== undefined && ['user', 'admin'].includes(role)) {
       updateFields.role = role;
     }
 
-    // Ensure password and security sensitive keys cannot be updated through this endpoint
     delete updateFields.password;
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -217,7 +256,6 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
     if (err.kind === 'ObjectId') {
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
-    // Handle duplicate key errors (e.g., email or username already taken)
     if (err.code === 11000) {
       const duplicateField = Object.keys(err.keyValue)[0];
       return res.status(400).json({
@@ -228,8 +266,6 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE USER
-// DELETE /api/users/:id
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const user = await User.findById(req.params.id);

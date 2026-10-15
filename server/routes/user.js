@@ -4,6 +4,28 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const User = require('../models/User');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
+const cloudinary = require('cloudinary').v2;
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Helper function to handle buffer uploading via stream
+const uploadToCloudinary = (buffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      { folder: 'avatars' }, // Optional folder name in your Cloudinary storage
+      (error, result) => {
+        if (result) resolve(result);
+        else reject(error);
+      }
+    );
+    uploadStream.end(buffer);
+  });
+};
 
 // --- MULTER MEMORY STORAGE CONFIGURATION (Vercel Compatible) ---
 const storage = multer.memoryStorage();
@@ -135,20 +157,27 @@ router.get('/profile', requireAuth, (req, res) => {
   res.json(req.user);
 });
 
-// POST /api/users/profile/avatar — Upload avatar using memory storage buffer
+// POST /api/users/profile/avatar — Upload or update profile picture via Cloudinary
 router.post('/profile/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Please upload an image file.' });
     }
 
-    // Note: Since you are using memory storage, you should upload req.file.buffer 
-    // to a cloud service (like Cloudinary or AWS S3) here and save the resulting URL.
-    // Example placeholder:
-    // const avatarUrl = await uploadToCloudinary(req.file.buffer);
-    
-    return res.status(501).json({ 
-      error: 'Disk storage is disabled on Vercel. Please integrate Cloudinary or AWS S3 to process req.file.buffer.' 
+    // Upload memory buffer to Cloudinary
+    const cloudinaryResult = await uploadToCloudinary(req.file.buffer);
+    const avatarUrl = cloudinaryResult.secure_url; // Gets the secure HTTPS URL
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatarUrl },
+      { new: true }
+    ).select('-password');
+
+    res.json({
+      message: 'Avatar uploaded successfully',
+      avatarUrl: updatedUser.avatarUrl,
+      user: updatedUser,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

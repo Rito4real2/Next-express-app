@@ -1,27 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const path = require('path');
-const fs = require('fs');
 const multer = require('multer');
 const User = require('../models/User');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
 
-// --- MULTER STORAGE CONFIGURATION ---
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `avatar-${req.user._id}-${Date.now()}${ext}`);
-  },
-});
+// --- MULTER MEMORY STORAGE CONFIGURATION (Vercel Compatible) ---
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
@@ -37,7 +22,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
-// POST /api/users/register and login user
+// POST /api/users/register
 router.post('/register', async (req, res) => {
   try {
     const { fullName, userName, emailAddress, password, gender, balance, role, avatarUrl } = req.body;
@@ -66,7 +51,7 @@ router.post('/register', async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -150,26 +135,20 @@ router.get('/profile', requireAuth, (req, res) => {
   res.json(req.user);
 });
 
-// POST /api/users/profile/avatar — Upload or update profile picture
+// POST /api/users/profile/avatar — Upload avatar using memory storage buffer
 router.post('/profile/avatar', requireAuth, upload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Please upload an image file.' });
     }
 
-    // Construct accessible image URL path
-    const avatarUrl = `/uploads/${req.file.filename}`;
-
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      { avatarUrl },
-      { new: true }
-    ).select('-password');
-
-    res.json({
-      message: 'Avatar uploaded successfully',
-      avatarUrl: updatedUser.avatarUrl,
-      user: updatedUser,
+    // Note: Since you are using memory storage, you should upload req.file.buffer 
+    // to a cloud service (like Cloudinary or AWS S3) here and save the resulting URL.
+    // Example placeholder:
+    // const avatarUrl = await uploadToCloudinary(req.file.buffer);
+    
+    return res.status(501).json({ 
+      error: 'Disk storage is disabled on Vercel. Please integrate Cloudinary or AWS S3 to process req.file.buffer.' 
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

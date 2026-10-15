@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useIsMounted } from '@/hooks/useIsMounted';
+import UserLogoutButton from '@/app/users/profile/UserLogoutButton';
 import '../../lib/locales/i18n'; // Force i18n instance initialization safely
 
 export default function Navbar() {
@@ -194,6 +195,13 @@ export default function Navbar() {
             </li>
           </ul>
         </div>
+
+        {/* Logout Button for Logged-in Users */}
+        {!loading && isLoggedIn && (
+          <div className="mt-4 md:mt-0 md:ml-4">
+            <UserLogoutButton />
+          </div>
+        )}
 
       </nav>
     </header>

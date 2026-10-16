@@ -42,6 +42,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   const { t, i18n } = useTranslation();
 
   const isDeposit = transaction?.type?.toUpperCase() === 'DEPOSIT';
+  const isWithdrawal = transaction?.type?.toUpperCase() === 'WITHDRAWAL';
   const isPending = transaction?.status?.toUpperCase() === 'PENDING';
 
   const methodUpper = transaction?.paymentMethod?.toUpperCase() || '';
@@ -71,17 +72,18 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   }, [transaction]);
 
-  // Fetch admin-configured payment settings
+  // Fetch admin-configured payment settings (Supports both deposits and withdrawals)
   const fetchSettings = useCallback(async () => {
-    if (!isDeposit || !transaction?.paymentMethod) return;
+    if (!transaction?.paymentMethod) return;
 
     setLoadingSettings(true);
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
     try {
       const queryMethod = encodeURIComponent(transaction.paymentMethod.trim().toUpperCase());
+      const queryType = encodeURIComponent(transaction.type.trim().toUpperCase());
 
-      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`, {
+      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}&txType=${queryType}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +104,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     } finally {
       setLoadingSettings(false);
     }
-  }, [isDeposit, transaction?.paymentMethod]);
+  }, [transaction?.paymentMethod, transaction?.type]);
 
   useEffect(() => {
     if (transaction) {
@@ -308,9 +310,12 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
               </span>
             </div>
 
-            {/* Dynamic Crypto Payment Destination */}
-            {isCrypto && isDeposit && (
+            {/* Dynamic Crypto Destination (Supports both Deposits & Withdrawals) */}
+            {isCrypto && (
               <div className="border-t pt-3 space-y-2">
+                <p className="text-xs font-bold font-mono text-gray-700 uppercase">
+                  {isDeposit ? t('receipt.crypto_deposit_details', 'Crypto Deposit Details') : t('receipt.crypto_withdrawal_details', 'Crypto Destination Details')}
+                </p>
                 {loadingSettings ? (
                   <div className="h-10 bg-gray-100 rounded animate-pulse" />
                 ) : (
@@ -322,7 +327,9 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                       </div>
                     )}
                     <div className="flex justify-between items-center gap-4">
-                      <span className="text-gray-500 text-sm font-mono">{t('receipt.deposit_wallet', 'Deposit Wallet')}</span>
+                      <span className="text-gray-500 text-sm font-mono">
+                        {isDeposit ? t('receipt.deposit_wallet', 'Deposit Wallet') : t('receipt.wallet_address', 'Wallet Address')}
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
                           {displayWalletAddress}
@@ -343,9 +350,12 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
               </div>
             )}
 
-            {/* Dynamic Bank Transfer Destination */}
-            {isBankTransfer && isDeposit && (
+            {/* Dynamic Bank Transfer Destination (Supports both Deposits & Withdrawals) */}
+            {isBankTransfer && (
               <div className="border-t pt-3 space-y-2">
+                <p className="text-xs font-bold font-mono text-gray-700 uppercase">
+                  {isDeposit ? t('receipt.bank_deposit_details', 'Bank Deposit Details') : t('receipt.bank_withdrawal_details', 'Destination Bank Account')}
+                </p>
                 {loadingSettings ? (
                   <div className="h-12 bg-gray-100 rounded animate-pulse" />
                 ) : (
@@ -389,7 +399,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
               </span>
             </div>
 
-            {/* Proof of Payment Section */}
+            {/* Proof of Payment Section (Deposits Only) */}
             {isDeposit && (
               <div className="mt-4 pt-4 border-t space-y-3">
                 <p className="text-xs font-bold font-mono text-gray-700 uppercase">

@@ -174,7 +174,28 @@ router.get('/all', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// 5. PATCH /api/transactions/:id/status (Admin approve/reject transaction)
+// 5. DELETE /api/transaction/:id — Delete a transaction record (Admin only)
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedTransaction = await Transaction.findByIdAndDelete(id);
+
+    if (!deletedTransaction) {
+      return res.status(404).json({ message: 'Transaction not found.' });
+    }
+
+    res.json({
+      message: 'Transaction successfully deleted.',
+      transactionId: deletedTransaction._id,
+    });
+  } catch (err) {
+    console.error('Error deleting transaction:', err);
+    res.status(500).json({ error: err.message || 'Server error while deleting transaction.' });
+  }
+});
+
+// 6. PATCH /api/transactions/:id/status (Admin approve/reject transaction)
 router.patch('/:id/status', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body; // 'APPROVED' or 'REJECTED'

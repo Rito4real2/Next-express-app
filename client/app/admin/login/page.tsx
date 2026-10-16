@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminNavbar from '@/components/AdminNavbar';
 
 export default function AdminLogin() {
   const [userName, setUserName] = useState('');
@@ -17,7 +16,8 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/admin-login', {
+      const backEndUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const res = await fetch(`${backEndUrl}/api/auth/admin-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // <--- CRITICAL: Allows browser to save HTTP-Only JWT Cookie

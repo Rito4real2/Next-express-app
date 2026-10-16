@@ -35,6 +35,7 @@ export default function AdminDashboard() {
   const [activeProofUrl, setActiveProofUrl] = useState<string | null>(null);
   const [selectedTxDetails, setSelectedTxDetails] = useState<Transaction | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Fetch transactions from Express backend
@@ -103,6 +104,43 @@ export default function AdminDashboard() {
     }
   };
 
+  // Handle Delete Transaction action
+  const handleDeleteTransaction = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingId(id);
+    setActionMessage(null);
+    setError(null);
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/transaction/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete transaction');
+      }
+
+      setActionMessage('Transaction successfully deleted.');
+
+      // Remove from local state
+      setTransactions((prev) => prev.filter((tx) => tx._id !== id));
+    } catch (err: any) {
+      setError(err.message || 'Deletion failed.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const copyToClipboard = (text: string, idKey: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(idKey);
@@ -129,7 +167,7 @@ export default function AdminDashboard() {
 
         <div className="bg-white rounded-lg shadow border overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[950px]">
+            <table className="w-full text-left border-collapse min-w-[1050px]">
               <thead>
                 <tr className="bg-gray-50 border-b text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   <th className="p-4 min-w-[160px]">User</th>
@@ -139,7 +177,7 @@ export default function AdminDashboard() {
                   <th className="p-4 min-w-[200px]">Withdrawal / Pay Details</th>
                   <th className="p-4 min-w-[110px]">Receipt</th>
                   <th className="p-4 min-w-[100px]">Status</th>
-                  <th className="p-4 min-w-[150px] text-right sm:text-left">Actions</th>
+                  <th className="p-4 min-w-[180px] text-right sm:text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-sm text-gray-800">
@@ -152,7 +190,6 @@ export default function AdminDashboard() {
                 ) : transactions.length > 0 ? (
                   transactions.map((tx) => {
                     const methodUpper = tx.paymentMethod?.toUpperCase() || '';
-                    const isBank = methodUpper === 'BANK_TRANSFER' || methodUpper === 'BANK';
                     const hasBankDetails = Boolean(tx.bankDetails?.accountNumber);
                     const hasWallet = Boolean(tx.walletAddress);
 
@@ -252,7 +289,7 @@ export default function AdminDashboard() {
                         <td className="p-4">
                           <span
                             className={`inline-block px-2 py-1 rounded text-xs font-bold capitalize ${
-                              tx.status?.toUpperCase() === 'APPROVED'
+                              tx.status?.toUpperCase() === 'APPROVED' || tx.status?.toUpperCase() === 'COMPLETED'
                                 ? 'bg-green-100 text-green-800'
                                 : tx.status?.toUpperCase() === 'REJECTED'
                                 ? 'bg-red-100 text-red-800'
@@ -265,28 +302,36 @@ export default function AdminDashboard() {
 
                         {/* Actions */}
                         <td className="p-4 whitespace-nowrap text-right sm:text-left">
-                          {tx.status?.toUpperCase() === 'PENDING' ? (
-                            <div className="flex items-center justify-end sm:justify-start gap-2">
-                              <button
-                                type="button"
-                                disabled={updatingId === tx._id}
-                                onClick={() => handleStatusUpdate(tx._id, 'APPROVED')}
-                                className="px-3 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 active:bg-green-800 transition shadow-sm disabled:opacity-50"
-                              >
-                                {updatingId === tx._id ? 'Updating...' : 'Approve'}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={updatingId === tx._id}
-                                onClick={() => handleStatusUpdate(tx._id, 'REJECTED')}
-                                className="px-3 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 active:bg-red-800 transition shadow-sm disabled:opacity-50"
-                              >
-                                {updatingId === tx._id ? 'Updating...' : 'Reject'}
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400 font-medium">Completed</span>
-                          )}
+                          <div className="flex items-center justify-end sm:justify-start gap-2 flex-wrap">
+                            {tx.status?.toUpperCase() === 'PENDING' && (
+                              <>
+                                <button
+                                  type="button"
+                                  disabled={updatingId === tx._id || deletingId === tx._id}
+                                  onClick={() => handleStatusUpdate(tx._id, 'APPROVED')}
+                                  className="px-2.5 py-1 bg-green-600 text-white rounded text-xs font-semibold hover:bg-green-700 active:bg-green-800 transition shadow-sm disabled:opacity-50"
+                                >
+                                  {updatingId === tx._id ? '...' : 'Approve'}
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={updatingId === tx._id || deletingId === tx._id}
+                                  onClick={() => handleStatusUpdate(tx._id, 'REJECTED')}
+                                  className="px-2.5 py-1 bg-red-600 text-white rounded text-xs font-semibold hover:bg-red-700 active:bg-red-800 transition shadow-sm disabled:opacity-50"
+                                >
+                                  {updatingId === tx._id ? '...' : 'Reject'}
+                                </button>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              disabled={deletingId === tx._id}
+                              onClick={() => handleDeleteTransaction(tx._id)}
+                              className="px-2.5 py-1 bg-gray-800 text-white rounded text-xs font-semibold hover:bg-gray-900 active:bg-black transition shadow-sm disabled:opacity-50"
+                            >
+                              {deletingId === tx._id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

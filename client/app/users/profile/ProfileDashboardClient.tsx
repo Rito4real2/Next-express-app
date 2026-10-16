@@ -15,6 +15,7 @@ interface UserProfile {
   gender: string;
   balance: number;
   role: 'user' | 'admin';
+  avatarUrl?: string; // Added avatarUrl field
 }
 
 interface ProfileDashboardClientProps {
@@ -22,7 +23,7 @@ interface ProfileDashboardClientProps {
   children: React.ReactNode; // For UserLogoutButton
 }
 
-export default function ProfileDashboardClient({ user, children }: { user: any; children: React.ReactNode }) {
+export default function ProfileDashboardClient({ user, children }: { user: UserProfile; children: React.ReactNode }) {
   return (
     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
       
@@ -44,9 +45,10 @@ export default function ProfileDashboardClient({ user, children }: { user: any; 
       <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-black bg-gray-100 shrink-0">
           <Image
             src={user.avatarUrl || '/default-avatar.png'}
-            alt={`${user.fullName}'s Avatar`}
+            alt={`${user.fullName}'Avatar`}
             fill
             className="object-cover"
+            loading='eager'
           />
         </div>
 

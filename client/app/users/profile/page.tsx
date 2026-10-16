@@ -7,6 +7,7 @@ import UserLogoutButton from './UserLogoutButton';
 import ReceiptModal, { Transaction } from '@/components/ReceiptModal';
 import TransactionHistoryTable from '@/components/TransactionHistoryTable';
 import ProfileDashboardClient from './ProfileDashboardClient';
+import AccountDetails from '@/components/AccountDetails';
 
 interface UserProfile {
   _id: string;
@@ -89,6 +90,9 @@ export default async function UserDashboard() {
           <ProfileDashboardClient user={{ ...user, avatarUrl: userAvatarUrl }}>
             <UserLogoutButton />
           </ProfileDashboardClient>
+
+          {/* Account Details Section */}
+          <AccountDetails user={{ ...user }} />
 
           {/* Transaction History Section */}
           <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">

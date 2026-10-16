@@ -16,7 +16,7 @@ export default function TransactionHistoryTable({ transactions = [] }: Props) {
   // Safely check array length
   if (!transactions || transactions.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500 border border-dashed rounded-lg">
+      <div className="text-center py-8 text-gray-500 border border-dashed rounded-lg font-mono">
         {t('transactions.no_transactions', 'No transactions found yet.')}
       </div>
     );
@@ -27,7 +27,7 @@ export default function TransactionHistoryTable({ transactions = [] }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-sm">
           <thead>
-            <tr className="border-b bg-gray-50 text-gray-600 uppercase text-xs">
+            <tr className="border-b bg-gray-50 text-gray-600 uppercase text-xs font-mono">
               <th className="p-3">{t('transactions.type', 'Type')}</th>
               <th className="p-3">{t('transactions.amount', 'Amount')}</th>
               <th className="p-3">{t('transactions.method', 'Method')}</th>
@@ -39,7 +39,7 @@ export default function TransactionHistoryTable({ transactions = [] }: Props) {
           <tbody className="divide-y text-gray-700">
             {transactions.map((tx) => (
               <tr key={tx._id} className="hover:bg-gray-50">
-                <td className="p-3 font-semibold">
+                <td className="p-3 font-semibold font-mono">
                   <span className={tx.type === 'DEPOSIT' ? 'text-green-600' : 'text-red-600'}>
                     {t(`transactions.types.${tx.type.toLowerCase()}`, tx.type)}
                   </span>
@@ -47,14 +47,14 @@ export default function TransactionHistoryTable({ transactions = [] }: Props) {
                 <td className="p-3 font-bold">
                   ${typeof tx.amount === 'number' ? tx.amount.toFixed(2) : tx.amount}
                 </td>
-                <td className="p-3">
+                <td className="p-3 font-mono">
                   <span className={tx.paymentMethod || t('common.not_applicable', 'N/A')}>
                     {t(`transactions.paymentMethod.${tx.paymentMethod?.toLowerCase()}`, tx.paymentMethod || t('common.not_applicable', 'N/A'))}
                   </span>
                 </td>
                 <td className="p-3">
                   <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                    className={`px-2 py-1 rounded-full text-xs font-semibold font-mono ${
                       tx.status === 'APPROVED' || tx.status === 'COMPLETED'
                         ? 'bg-green-100 text-green-800'
                         : tx.status === 'PENDING'
@@ -65,7 +65,7 @@ export default function TransactionHistoryTable({ transactions = [] }: Props) {
                     {t(`transactions.statuses.${tx.status.toLowerCase()}`, tx.status)}
                   </span>
                 </td>
-                <td className="p-3 text-gray-500">
+                <td className="p-3 text-gray-500 font-mono">
                   {tx.createdAt 
                     ? new Date(tx.createdAt).toLocaleDateString(i18n.language) 
                     : t('common.not_applicable', 'N/A')}
@@ -73,7 +73,7 @@ export default function TransactionHistoryTable({ transactions = [] }: Props) {
                 <td className="p-3 text-right">
                   <button
                     onClick={() => setSelectedTx(tx)}
-                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded border text-xs font-medium transition"
+                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded border text-xs font-medium font-mono transition"
                   >
                     {t('transactions.view', 'View')}
                   </button>

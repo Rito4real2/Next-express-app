@@ -90,40 +90,29 @@ export default function DepositPage() {
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
       <div className="bg-white p-8 rounded-lg shadow-sm border w-full max-w-md space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-800">{t('deposit.title', 'Deposit Funds')}</h1>
-
-          {/* Language Switcher Dropdown
-          <select
-            value={selectedLang}
-            onChange={handleLanguageSelect}
-            className="text-sm border rounded p-1 text-gray-700 bg-white"
-          >
-            <option value="en">EN</option>
-            <option value="es">ES</option>
-            <option value="fr">FR</option>
-          </select> */}
+          <h1 className="text-2xl font-bold font-mono text-green-800">{t('deposit.title', 'Deposit Funds')}</h1>
         </div>
 
         {status && (
-          <div className="p-3 bg-green-100 border border-green-300 text-green-800 text-sm rounded">
+          <div className="p-3 bg-green-100 border border-green-300 text-green-800 text-sm rounded font-mono">
             {status}
           </div>
         )}
         {error && (
-          <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-sm rounded">
+          <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-sm rounded font-mono">
             {error}
           </div>
         )}
 
         <form onSubmit={handleDeposit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium font-mono text-green-700">
               {t('deposit.payment_method', 'Payment Method')}
             </label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
+              className="w-full p-2 border rounded mt-1 text-gray-800 bg-white font-mono"
             >
               <option value="Credit/Debit Card">{t('deposit.card', 'Credit / Debit Card')}</option>
               <option value="BANK_TRANSFER">{t('deposit.bank_transfer', 'Bank Transfer')}</option>
@@ -134,13 +123,13 @@ export default function DepositPage() {
           {/* Conditional Crypto Selection Tag */}
           {paymentMethod === 'CRYPTO' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-green-700 font-mono">
                 {t('deposit.select_crypto', 'Select Cryptocurrency')}
               </label>
               <select
                 value={selectedCrypto}
                 onChange={(e) => setSelectedCrypto(e.target.value)}
-                className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
+                className="w-full p-2 border rounded mt-1 text-gray-800 bg-white font-mono"
               >
                 {CRYPTO_OPTIONS.map((crypto) => (
                   <option key={crypto.id} value={crypto.id}>
@@ -152,7 +141,7 @@ export default function DepositPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-green-700 font-mono">
               {t('deposit.amount', 'Amount ($)')}
             </label>
             <input
@@ -170,7 +159,7 @@ export default function DepositPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-green-600 text-white rounded font-medium hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
+            className="w-full py-2 bg-linear-to-r from-green-950 via-green-900 to-green-800 text-white rounded font-medium hover:bg-green-700 transition disabled:opacity-50 cursor-pointer font-mono"
           >
             {loading ? t('deposit.submitting', 'Submitting...') : t('deposit.submit', 'Submit Deposit Request')}
           </button>

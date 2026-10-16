@@ -81,18 +81,18 @@ export default function WithdrawPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
       <div className="bg-white p-8 rounded-lg shadow-sm border w-full max-w-md space-y-6">
-        <h1 className="text-2xl font-bold text-gray-800">{t('withdraw.title', 'Withdraw Funds')}</h1>
+        <h1 className="text-2xl font-bold text-red-800 font-mono">{t('withdraw.title', 'Withdraw Funds')}</h1>
 
-        {status && <div className="p-3 bg-green-100 border border-green-300 text-green-800 text-sm rounded">{status}</div>}
-        {error && <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-sm rounded">{error}</div>}
+        {status && <div className="p-3 bg-green-100 border border-green-300 text-green-800 text-sm rounded font-mono">{status}</div>}
+        {error && <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-sm rounded font-mono">{error}</div>}
 
         <form onSubmit={handleWithdrawal} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('withdraw.method', 'Withdrawal Method')}</label>
+            <label className="block text-sm font-medium font-mono text-red-400">{t('withdraw.method', 'Withdrawal Method')}</label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full p-2 border rounded mt-1 text-gray-800 bg-white"
+              className="w-full p-2 border rounded mt-1 text-gray-800 font-mono bg-white"
             >
               <option value="BANK_TRANSFER">{t('withdraw.bank_transfer', 'Bank Transfer')}</option>
               <option value="CRYPTO">{t('withdraw.crypto_wallet', 'Crypto Wallet')}</option>
@@ -101,14 +101,14 @@ export default function WithdrawPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('withdraw.amount', 'Amount ($)')}</label>
+            <label className="block text-sm font-medium font-mono text-red-400">{t('withdraw.amount', 'Amount ($)')}</label>
             <input
               type="number"
               min="1"
               step="any"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full p-2 border rounded mt-1 text-gray-800"
+              className="w-full p-2 border rounded mt-1 text-gray-800 font-mono"
               placeholder="50.00"
               required
             />
@@ -116,36 +116,36 @@ export default function WithdrawPage() {
 
           {paymentMethod === 'BANK_TRANSFER' && (
             <div className="space-y-3 pt-2 border-t">
-              <p className="text-xs font-semibold text-gray-500 uppercase">{t('withdraw.bank_info', 'Bank Information')}</p>
+              <p className="text-xs font-semibold font-mono text-gray-500 uppercase">{t('withdraw.bank_info', 'Bank Information')}</p>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('withdraw.bank_name', 'Bank Name')}</label>
+                <label className="block text-sm font-medium font-mono text-red-400">{t('withdraw.bank_name', 'Bank Name')}</label>
                 <input
                   type="text"
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  className="w-full p-2 border rounded mt-1 text-gray-800 font-mono"
                   placeholder={t('withdraw.bank_name_placeholder', 'e.g. Chase Bank')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('withdraw.account_number', 'Account Number')}</label>
+                <label className="block text-sm font-medium text-red-400">{t('withdraw.account_number', 'Account Number')}</label>
                 <input
                   type="text"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
-                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  className="w-full p-2 border rounded mt-1 text-gray-800 font-mono"
                   placeholder="0123456789"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('withdraw.account_holder_name', 'Account Holder Name')}</label>
+                <label className="block text-sm font-medium font-mono text-red-400">{t('withdraw.account_holder_name', 'Account Holder Name')}</label>
                 <input
                   type="text"
                   value={accountHolderName}
                   onChange={(e) => setAccountHolderName(e.target.value)}
-                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  className="w-full p-2 border rounded mt-1 text-gray-800 font-mono"
                   placeholder="John Doe"
                   required
                 />
@@ -156,12 +156,12 @@ export default function WithdrawPage() {
           {paymentMethod === 'CRYPTO' && (
             <div className="space-y-3 pt-2 border-t">
               <div>
-                <label className="block text-sm font-medium text-gray-700">{t('withdraw.wallet_address', 'Crypto Wallet Address')}</label>
+                <label className="block text-sm font-medium text-gray-700 font-mono">{t('withdraw.wallet_address', 'Crypto Wallet Address')}</label>
                 <input
                   type="text"
                   value={walletAddress}
                   onChange={(e) => setCryptoAddress(e.target.value)}
-                  className="w-full p-2 border rounded mt-1 text-gray-800"
+                  className="w-full p-2 border rounded mt-1 text-gray-800 font-mono"
                   placeholder="0x... or bc1..."
                   required
                 />
@@ -172,7 +172,7 @@ export default function WithdrawPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-red-600 text-white rounded font-medium hover:bg-red-700 transition disabled:opacity-50 cursor-pointer"
+            className="w-full py-2 bg-linear-to-r from-red-950 via-red-900 to-red-800 text-white rounded font-medium font-mono hover:bg-red-700 transition disabled:opacity-50 cursor-pointer"
           >
             {loading ? t('withdraw.submitting', 'Submitting...') : t('withdraw.submit', 'Submit Withdrawal Request')}
           </button>

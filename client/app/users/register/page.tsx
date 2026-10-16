@@ -105,22 +105,22 @@ export default function RegisterPage() {
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md border space-y-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('auth.create_account', 'Create an Account')}</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold font-mono text-gray-900">{t('auth.create_account', 'Create an Account')}</h1>
+            <p className="text-sm text-gray-500 mt-1 font-mono">
               {t('auth.register_subtitle', 'Sign up to get started with your account.')}
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-sm rounded">
+          <div className="p-3 bg-red-100 border border-red-300 text-red-800 text-sm rounded font-mono">
             {error}
           </div>
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('auth.full_name_label', 'Full Name')}</label>
+            <label className="block text-sm font-medium font-mono text-gray-700">{t('auth.full_name_label', 'Full Name')}</label>
             <input
               type="text"
               name="fullName"
@@ -133,7 +133,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('auth.username', 'Username')}</label>
+            <label className="block text-sm font-medium font-mono text-gray-700">{t('auth.username', 'Username')}</label>
             <input
               type="text"
               name="userName"
@@ -146,7 +146,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('auth.email_address', 'Email Address')}</label>
+            <label className="block text-sm font-medium font-mono text-gray-700">{t('auth.email_address', 'Email Address')}</label>
             <input
               type="email"
               name="emailAddress"
@@ -159,7 +159,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('auth.gender', 'Gender')}</label>
+            <label className="block text-sm font-medium font-mono text-gray-700">{t('auth.gender', 'Gender')}</label>
             <select
               name="gender"
               value={formData.gender}
@@ -173,7 +173,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('auth.password', 'Password')}</label>
+            <label className="block text-sm font-medium font-mono text-gray-700">{t('auth.password', 'Password')}</label>
             <input
               type="password"
               name="password"
@@ -186,7 +186,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">{t('auth.confirm_password', 'Confirm Password')}</label>
+            <label className="block text-sm font-medium font-mono text-gray-700">{t('auth.confirm_password', 'Confirm Password')}</label>
             <input
               type="password"
               name="confirmPassword"
@@ -201,13 +201,13 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="flex items-center justify-center px-4 h-11 text-sm sm:text-base text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto"
           >
             {loading ? t('auth.creating_account', 'Creating Account...') : t('auth.register', 'Register')}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-gray-600 font-mono">
           {t('auth.already_have_account', 'Already have an account?')}
           {" "}
           <Link

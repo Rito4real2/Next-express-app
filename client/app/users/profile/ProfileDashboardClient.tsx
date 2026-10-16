@@ -25,15 +25,15 @@ interface ProfileDashboardClientProps {
 
 export default function ProfileDashboardClient({ user, children }: { user: UserProfile; children: React.ReactNode }) {
   return (
-    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+    <div className="bg-linear-to-r from-red-950 via-red-900 to-red-800 p-6 rounded-xl border border-gray-200 shadow-sm flex md:flex-row items-center justify-between gap-6">
       
       {/* User Info + Avatar */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-row justify-between items-center gap-4">
         
 
         <div>
-          <h1 className='font-bold text-lg font-mono '>Hi,{user.fullName}</h1>
-          <p className="text-sm font-mono text-gray-500">@{user.userName}</p>
+          <h1 className='font-bold text-lg font-mono text-red-200'>Hi,{user.fullName}</h1>
+          <p className="text-sm font-mono text-red-200">@{user.userName}</p>
         </div>
       </div>
 

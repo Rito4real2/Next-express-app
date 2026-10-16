@@ -72,18 +72,17 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   }, [transaction]);
 
-  // Fetch admin-configured payment settings (Supports both deposits and withdrawals)
+  // Fetch admin-configured payment settings (Deposits only)
   const fetchSettings = useCallback(async () => {
-    if (!transaction?.paymentMethod) return;
+    if (!isDeposit || !transaction?.paymentMethod) return;
 
     setLoadingSettings(true);
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
     try {
       const queryMethod = encodeURIComponent(transaction.paymentMethod.trim().toUpperCase());
-      const queryType = encodeURIComponent(transaction.type.trim().toUpperCase());
 
-      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}&txType=${queryType}`, {
+      const res = await fetch(`${API_BASE_URL}/api/transaction/payment-settings?type=${queryMethod}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +103,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     } finally {
       setLoadingSettings(false);
     }
-  }, [transaction?.paymentMethod, transaction?.type]);
+  }, [isDeposit, transaction?.paymentMethod]);
 
   useEffect(() => {
     if (transaction) {
@@ -238,22 +237,24 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
-  const displayWalletAddress =
-    paymentSettings?.walletAddress ||
-    paymentSettings?.address ||
-    transaction.walletAddress ||
-    t('common.not_applicable', 'N/A');
+  // For deposits, use admin settings. For withdrawals, use the user's submitted transaction data.
+  const displayWalletAddress = isDeposit
+    ? paymentSettings?.walletAddress || paymentSettings?.address || transaction.walletAddress || t('common.not_applicable', 'N/A')
+    : transaction.walletAddress || t('common.not_applicable', 'N/A');
 
-  const displayNetwork = paymentSettings?.network || '';
+  const displayNetwork = isDeposit ? paymentSettings?.network || '' : '';
 
-  const displayBankName =
-    paymentSettings?.bankName || transaction.bankDetails?.bankName || t('common.not_applicable', 'N/A');
-  const displayAccountHolder =
-    paymentSettings?.accountHolderName ||
-    transaction.bankDetails?.accountHolderName ||
-    t('common.not_applicable', 'N/A');
-  const displayAccountNumber =
-    paymentSettings?.accountNumber || transaction.bankDetails?.accountNumber || t('common.not_applicable', 'N/A');
+  const displayBankName = isDeposit
+    ? paymentSettings?.bankName || transaction.bankDetails?.bankName || t('common.not_applicable', 'N/A')
+    : transaction.bankDetails?.bankName || t('common.not_applicable', 'N/A');
+
+  const displayAccountHolder = isDeposit
+    ? paymentSettings?.accountHolderName || transaction.bankDetails?.accountHolderName || t('common.not_applicable', 'N/A')
+    : transaction.bankDetails?.accountHolderName || t('common.not_applicable', 'N/A');
+
+  const displayAccountNumber = isDeposit
+    ? paymentSettings?.accountNumber || transaction.bankDetails?.accountNumber || t('common.not_applicable', 'N/A')
+    : transaction.bankDetails?.accountNumber || t('common.not_applicable', 'N/A');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
@@ -310,13 +311,13 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
               </span>
             </div>
 
-            {/* Dynamic Crypto Destination (Supports both Deposits & Withdrawals) */}
+            {/* Crypto Destination Details */}
             {isCrypto && (
               <div className="border-t pt-3 space-y-2">
                 <p className="text-xs font-bold font-mono text-gray-700 uppercase">
                   {isDeposit ? t('receipt.crypto_deposit_details', 'Crypto Deposit Details') : t('receipt.crypto_withdrawal_details', 'Crypto Destination Details')}
                 </p>
-                {loadingSettings ? (
+                {isDeposit && loadingSettings ? (
                   <div className="h-10 bg-gray-100 rounded animate-pulse" />
                 ) : (
                   <>
@@ -350,13 +351,13 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
               </div>
             )}
 
-            {/* Dynamic Bank Transfer Destination (Supports both Deposits & Withdrawals) */}
+            {/* Bank Transfer Destination Details */}
             {isBankTransfer && (
               <div className="border-t pt-3 space-y-2">
                 <p className="text-xs font-bold font-mono text-gray-700 uppercase">
                   {isDeposit ? t('receipt.bank_deposit_details', 'Bank Deposit Details') : t('receipt.bank_withdrawal_details', 'Destination Bank Account')}
                 </p>
-                {loadingSettings ? (
+                {isDeposit && loadingSettings ? (
                   <div className="h-12 bg-gray-100 rounded animate-pulse" />
                 ) : (
                   <>

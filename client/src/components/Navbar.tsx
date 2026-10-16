@@ -100,7 +100,7 @@ export default function Navbar() {
         </div>
 
         {/* Links & Language Switcher Dropdown/Grid */}
-        <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100 mt-4' : 'max-h-0 opacity-0 md:max-h-none md:opacity-100 hidden md:block mt-0'}`}>
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-[700px] opacity-100 mt-4' : 'max-h-0 opacity-0 md:max-h-none md:opacity-100 hidden md:block mt-0'}`}>
           <ul className="flex flex-col md:flex-row md:items-center md:justify-end gap-3 md:gap-4 pt-3 md:pt-0 border-t md:border-t-0 border-gray-200">
             
             <li>
@@ -193,15 +193,16 @@ export default function Navbar() {
                 <div className="h-11 w-full md:w-32 border-[3px] border-black bg-gray-100 animate-pulse" />
               )}
             </li>
+
+            {/* Logout Button integrated cleanly into the navigation list */}
+            {!loading && isLoggedIn && (
+              <li className="w-full md:w-auto flex items-center justify-center">
+                <UserLogoutButton />
+              </li>
+            )}
+
           </ul>
         </div>
-
-        {/* Logout Button for Logged-in Users */}
-        {!loading && isLoggedIn && (
-          <div className="mt-4 md:mt-0 md:ml-4">
-            <UserLogoutButton />
-          </div>
-        )}
 
       </nav>
     </header>

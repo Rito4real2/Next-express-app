@@ -9,7 +9,7 @@ export default function UserLogoutButton() {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/users/login');
+      router.push('/use');
       router.refresh();
     } catch (error) {
       console.error('Failed to log out:', error);
@@ -19,7 +19,7 @@ export default function UserLogoutButton() {
   return (
     <button
       onClick={handleLogout}
-      className="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-medium rounded hover:bg-gray-300 transition"
+      className="flex items-center justify-center px-4 h-11 text-sm sm:text-base text-black font-mono border-[3px] border-black bg-white hover:bg-black hover:text-white transition-colors w-full md:w-auto"
     >
       Log Out
     </button>

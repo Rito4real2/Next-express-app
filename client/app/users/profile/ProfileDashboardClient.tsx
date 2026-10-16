@@ -32,20 +32,15 @@ export default function ProfileDashboardClient({ user, children }: { user: UserP
         
 
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{user.fullName}</h1>
+          <h1 className='font-bold text-lg font-mono '>Hi,{user.fullName}</h1>
           <p className="text-sm font-mono text-gray-500">@{user.userName}</p>
         </div>
       </div>
 
-      {/* Action / Logout Buttons */}
-      {/* <div className="flex items-center gap-3">
-        {children}
-      </div> */}
-
       <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-black bg-gray-100 shrink-0">
           <Image
             src={user.avatarUrl || '/default-avatar.png'}
-            alt={`${user.fullName}'Avatar`}
+            alt={`${user.fullName}'Avatar'`}
             fill
             className="object-cover"
             loading='eager'

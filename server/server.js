@@ -11,6 +11,8 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const transactionRoute = require('./routes/transaction');
+const { router: investmentRoute} = require('./routes/investment')
+const investmentAdminRouter = require('./routes/investmentAdmin');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,7 +34,7 @@ app.use(
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true, // Crucial for HTTP-Only cookies with credentials: 'include'
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
@@ -68,6 +70,8 @@ app.use(async (req, res, next) => {
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/transaction', transactionRoute);
+app.use('/api/investment', investmentRoute);
+app.use('/api/investments/admin', investmentAdminRouter);
 
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {

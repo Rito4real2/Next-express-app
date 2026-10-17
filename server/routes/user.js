@@ -6,6 +6,9 @@ const User = require('../models/User');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 
+// Import the evaluation function from investment routes
+const { evaluateUserInvestments } = require('./investment');
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -153,8 +156,25 @@ router.get('/me', requireAuth, (req, res) => {
   res.json(req.user);
 });
 
-router.get('/profile', requireAuth, (req, res) => {
-  res.json(req.user);
+// GET /api/users/profile — Fetch authenticated user profile
+router.get('/profile', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // 1. Recalculate profit accruals and auto-complete matured plans before loading profile
+    await evaluateUserInvestments(userId);
+
+    // 2. Fetch updated user details (reflecting any credited principal or profit)
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error('Error fetching user profile:', err);
+    res.status(500).json({ error: 'Failed to retrieve profile information.' });
+  }
 });
 
 // POST /api/users/profile/avatar — Upload or update profile picture via Cloudinary

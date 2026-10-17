@@ -34,7 +34,7 @@ export default function AdminInvestmentPlanForm({ onPlanCreated }: { onPlanCreat
 
     try {
       const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http:localhost:3000'
-      const res = await fetch(`${backendUrl}/api/investments/admin/plans`, {
+      const res = await fetch(`${backendUrl}/api/investments/admin/buy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

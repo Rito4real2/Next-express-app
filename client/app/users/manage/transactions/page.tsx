@@ -167,17 +167,17 @@ export default function AdminDashboard() {
 
         <div className="bg-white rounded-lg shadow border overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1050px]">
+            <table className="w-full text-left border-collapse min-w-262.5">
               <thead>
                 <tr className="bg-gray-50 border-b text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                  <th className="p-4 min-w-[160px]">User</th>
-                  <th className="p-4 min-w-[90px]">Type</th>
-                  <th className="p-4 min-w-[100px]">Amount</th>
-                  <th className="p-4 min-w-[110px]">Method</th>
-                  <th className="p-4 min-w-[200px]">Withdrawal / Pay Details</th>
-                  <th className="p-4 min-w-[110px]">Receipt</th>
-                  <th className="p-4 min-w-[100px]">Status</th>
-                  <th className="p-4 min-w-[180px] text-right sm:text-left">Actions</th>
+                  <th className="p-4 min-w-40">User</th>
+                  <th className="p-4 min-w-22.5">Type</th>
+                  <th className="p-4 min-w-25">Amount</th>
+                  <th className="p-4 min-w-27.5">Method</th>
+                  <th className="p-4 min-w-50">Withdrawal / Pay Details</th>
+                  <th className="p-4 min-w-27.5">Receipt</th>
+                  <th className="p-4 min-w-25">Status</th>
+                  <th className="p-4 min-w-45 text-right sm:text-left">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 text-sm text-gray-800">
@@ -197,10 +197,10 @@ export default function AdminDashboard() {
                       <tr key={tx._id} className="hover:bg-gray-50 transition-colors">
                         {/* User Info */}
                         <td className="p-4">
-                          <p className="font-semibold text-gray-900 truncate max-w-[160px]">
+                          <p className="font-semibold text-gray-900 truncate max-w-40">
                             {tx.user?.fullName || 'Unknown User'}
                           </p>
-                          <p className="text-xs text-gray-500 truncate max-w-[160px]">
+                          <p className="text-xs text-gray-500 truncate max-w-40">
                             {tx.user?.emailAddress}
                           </p>
                         </td>
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
                         <td className="p-4">
                           {hasWallet ? (
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded border text-gray-800 max-w-[130px] truncate">
+                              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded border text-gray-800 max-w-32.5 truncate">
                                 {tx.walletAddress}
                               </span>
                               <button

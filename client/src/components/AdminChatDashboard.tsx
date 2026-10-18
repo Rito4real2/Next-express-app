@@ -93,7 +93,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
   };
 
   return (
-    <div className="bg-white rounded-2xl border shadow-sm h-[600px] flex overflow-hidden font-mono">
+    <div className="bg-white rounded-2xl border shadow-sm h-150 flex overflow-hidden font-mono">
       
       {/* Sidebar: Thread List */}
       <div className="w-1/3 border-r flex flex-col bg-gray-50">

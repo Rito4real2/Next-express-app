@@ -17,7 +17,9 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
 
     // Load initial message history
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-    fetch(`${backendUrl}/api/chat/messages/${user._id}`)
+    fetch(`${backendUrl}/api/chat/messages/${user._id}`, {
+      credentials: 'include'
+    })
       .then(res => res.json())
       .then(data => setMessages(Array.isArray(data) ? data : []));
 

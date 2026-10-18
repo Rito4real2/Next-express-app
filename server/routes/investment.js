@@ -82,6 +82,28 @@ router.post('/buy', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/investments/my-investments — Fetch logged-in user's active and completed investments
+router.get('/my-investments', requireAuth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // 1. Recalculate profit accruals and auto-complete matured plans first
+    await evaluateUserInvestments(userId);
+
+    // 2. Fetch user investments and populate the plan template configuration
+    const investments = await UserInvestment.find({ user: userId })
+      .populate('planConfig')
+      .sort({ createdAt: -1 });
+
+    console.log('INVESTMENTS FOUND IN DB:', investments);
+
+    res.json(investments);
+  } catch (err) {
+    console.error('Error fetching user investments:', err);
+    res.status(500).json({ error: err.message || 'Failed to retrieve user investments.' });
+  }
+});
+
 // Helper to evaluate active investments for a user
 async function evaluateUserInvestments(userId) {
   try {

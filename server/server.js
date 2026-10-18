@@ -22,6 +22,17 @@ const chatRouter = require('./routes/chat');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// SAFE DATABASE CONNECTION MIDDLEWARE
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed during request:', error);
+    res.status(500).json({ error: 'Database connection error', details: error.message });
+  }
+});
+
 // Create HTTP server and bind Express
 const server = http.createServer(app);
 
@@ -127,17 +138,6 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development',
     hasMongoUri: Boolean(process.env.MONGO_URI || process.env.DATABASE_URL || process.env.MONGODB_URI)
   });
-});
-
-// 2. SAFE DATABASE CONNECTION MIDDLEWARE
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    console.error('Database connection failed during request:', error);
-    res.status(500).json({ error: 'Database connection error', details: error.message });
-  }
 });
 
 // API Routes

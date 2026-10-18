@@ -70,6 +70,10 @@ export default async function AdminDashboardPage() {
     name: data.currentAdmin.fullName
   };
 
+  if (!adminUser._id){
+    console.error('Admin user ID is missing from dashboard data!');
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-mono pb-24">
       <div className="max-w-6xl mx-auto space-y-8">

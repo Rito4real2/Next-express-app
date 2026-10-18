@@ -15,7 +15,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
     socket.connect();
 
     // Fetch initial threads list
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http:localhost:5000'
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
     fetch(`${backendUrl}/api/chat/admin/threads`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
@@ -53,7 +53,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
     socket.emit('join_room', targetUserId);
 
     // Fetch messages for this thread
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http:localhost:5000'
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
     fetch(`${backendUrl}/api/chat/messages/${targetUserId}`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => setMessages(Array.isArray(data) ? data : []));

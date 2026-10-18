@@ -95,6 +95,7 @@ router.get('/admin-dashboard-data', requireAdmin, async (req, res) => {
       },
       recentUsers,
       currentAdmin: {
+        _id: req.user._id,
         fullName: req.user.fullName,
         emailAddress: req.user.emailAddress,
       },

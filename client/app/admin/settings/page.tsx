@@ -58,7 +58,7 @@ export default function UserSettingsPage() {
                 href={link.href}
                 className="flex items-start gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-100 hover:border-black transition-all group"
               >
-                <span className="text-2xl p-2 bg-white rounded-lg border shadow-sm group-hover:scale-105 transition-transform flex-shrink-0">
+                <span className="text-2xl p-2 bg-white rounded-lg border shadow-sm group-hover:scale-105 transition-transform shrink-0">
                   {link.icon}
                 </span>
                 <div>

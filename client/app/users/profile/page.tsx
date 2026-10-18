@@ -9,7 +9,8 @@ import TransactionHistoryTable from '@/components/TransactionHistoryTable';
 import ProfileDashboardClient from './ProfileDashboardClient';
 import AccountDetails from '@/components/AccountDetails';
 import BuyPlanCard from '@/components/BuyPlanCard';
-import ActiveInvestmentsList from '@/components/ActiveInvestmentsList'; // Import investment portfolio component
+import ActiveInvestmentsList from '@/components/ActiveInvestmentsList';
+import UserChatWidget from '@/components/UserChatWidget'; // <-- 1. Import the chat widget
 
 interface UserProfile {
   _id: string;
@@ -71,14 +72,10 @@ async function getDashboardData(): Promise<{
 
     if (!profileRes.ok) return null;
 
-    console.log('INVESTMENT FETCH STATUS:', investmentRes.status);
-
     const user = await profileRes.json();
     const txData = txRes.ok ? await txRes.json() : null;
     const plansData = plansRes.ok ? await plansRes.json() : [];
     const investmentData = investmentRes.ok ? await investmentRes.json() : [];
-
-    console.log('INVESTMENT RESPONSE DATA:', investmentData);
 
     let rawTransactions: Transaction[] = [];
 
@@ -114,7 +111,6 @@ export default async function UserDashboard() {
 
   const { user, transactions, plans, investments } = data;
 
-  // Ensure image URL resolves cleanly with default fallback
   const userAvatarUrl = user.avatarUrl || '/default-avatar.png';
 
   return (
@@ -122,7 +118,7 @@ export default async function UserDashboard() {
       <main className="p-4 sm:p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           
-          {/* Header & Stats Client Wrapper with Avatar URL */}
+          {/* Header & Stats Client Wrapper */}
           <ProfileDashboardClient user={{ ...user, avatarUrl: userAvatarUrl }}>
             <UserLogoutButton />
           </ProfileDashboardClient>
@@ -161,6 +157,9 @@ export default async function UserDashboard() {
 
         </div>
       </main>
+
+      {/* 2. Render Support Chat Widget in the bottom right corner */}
+      <UserChatWidget user={{ _id: user._id, name: user.fullName }} />
     </div>
   );
 }

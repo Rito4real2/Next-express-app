@@ -33,8 +33,8 @@ export default function AdminInvestmentPlanForm({ onPlanCreated }: { onPlanCreat
     setSuccessMsg('');
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http:localhost:3000'
-      const res = await fetch(`${backendUrl}/api/investments/admin/buy`, {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+      const res = await fetch(`${backendUrl}/api/investments/admin/plans`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

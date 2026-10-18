@@ -1,7 +1,8 @@
+// client/src/app/admin/dashboard/page.tsx
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import LogoutButton from './LogoutButton';
-import AdminNavbar from '@/components/AdminNavbar'
+import AdminChatDashboard from '@/components/AdminChatDashboard'; // <-- 1. Import the admin chat dashboard component
 
 interface AdminDashboardData {
   stats: {
@@ -18,6 +19,7 @@ interface AdminDashboardData {
     balance: number;
   }>;
   currentAdmin: {
+    _id?: string;
     fullName: string;
     emailAddress: string;
   };
@@ -30,13 +32,13 @@ async function getAdminData(): Promise<AdminDashboardData | null> {
     const headersList = await headers();
     const cookieHeader = headersList.get('cookie') || '';
 
-    // If server rewrites aren't set, fallback to absolute URL
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
     const res = await fetch(`${backendUrl}/api/auth/admin-dashboard-data`, {
       headers: {
         Cookie: cookieHeader,
       },
+      credentials: 'include',
       cache: 'no-store',
     });
 
@@ -62,8 +64,14 @@ export default async function AdminDashboardPage() {
     redirect('/admin/login');
   }
 
+  // Provide a fallback ID if the admin profile object doesn't include _id
+  const adminUser = {
+    _id: data.currentAdmin._id || 'admin',
+    name: data.currentAdmin.fullName
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-8 font-mono pb-24">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex items-center justify-between border-b pb-4">
           <div>
@@ -90,9 +98,9 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border shadow-sm p-6 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Recently Registered Users</h2>
-        </div>
+        {/* Recently Registered Users Section */}
+        <div className="bg-white rounded-lg border shadow-sm p-6 space-y-4">
+          <h2 className="text-xl font-bold text-gray-800">Recently Registered Users</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -129,6 +137,15 @@ export default async function AdminDashboardPage() {
             </table>
           </div>
         </div>
+
+        {/* Live Support Management Section */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">User Support Inbox</h2>
+          <p className="text-xs text-gray-500">Manage real-time inquiries and chat with platform users.</p>
+          <AdminChatDashboard adminUser={adminUser} />
+        </div>
+
       </div>
+    </div>
   );
 }

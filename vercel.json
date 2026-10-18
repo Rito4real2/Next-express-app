@@ -3,6 +3,15 @@
     {
       "source": "/api/(.*)",
       "destination": "/api"
+    },
+
+    { "source": "/socket.io/(.*)", 
+    "destination": "/api/socket" 
+    },
+
+    { "source": "/(.*)", 
+    "destination": "/" 
     }
   ]
 }
+

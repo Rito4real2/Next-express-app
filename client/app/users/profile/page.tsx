@@ -1,6 +1,7 @@
-// client/src/app/users/profile/page.tsx
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import UserLogoutButton from './UserLogoutButton';
@@ -10,7 +11,7 @@ import ProfileDashboardClient from './ProfileDashboardClient';
 import AccountDetails from '@/components/AccountDetails';
 import BuyPlanCard from '@/components/BuyPlanCard';
 import ActiveInvestmentsList from '@/components/ActiveInvestmentsList';
-import UserChatWidget from '@/components/UserChatWidget'; // <-- 1. Import the chat widget
+import UserChatWidget from '@/components/UserChatWidget';
 
 interface UserProfile {
   _id: string;
@@ -33,84 +34,93 @@ interface InvestmentPlan {
   maxInvestment: number;
 }
 
-export const dynamic = 'force-dynamic';
+export default function UserDashboard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<{ 
+    user: UserProfile; 
+    transactions: Transaction[]; 
+    plans: InvestmentPlan[];
+    investments: any[];
+  } | null>(null);
 
-async function getDashboardData(): Promise<{ 
-  user: UserProfile; 
-  transactions: Transaction[]; 
-  plans: InvestmentPlan[];
-  investments: any[];
-} | null> {
-  try {
-    const cookieStore = await cookies();
-    const cookieHeader = cookieStore.toString();
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const [profileRes, txRes, plansRes, investmentRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/users/profile`, {
+            cache: 'no-store',
+            credentials: 'include'
+          }),
+          fetch(`${API_BASE_URL}/api/transaction/my-history`, {
+            cache: 'no-store',
+            credentials: 'include'
+          }),
+          fetch(`${API_BASE_URL}/api/investments/admin/plans`, {
+            cache: 'no-store',
+            credentials: 'include'
+          }),
+          fetch(`${API_BASE_URL}/api/investment/my-investments`, {
+            cache: 'no-store', 
+            credentials: 'include' 
+          }),
+        ]);
 
-    const [profileRes, txRes, plansRes, investmentRes] = await Promise.all([
-      fetch(`${API_BASE_URL}/api/users/profile`, {
-        headers: { Cookie: cookieHeader },
-        cache: 'no-store',
-        credentials: 'include'
-      }),
-      fetch(`${API_BASE_URL}/api/transaction/my-history`, {
-        headers: { Cookie: cookieHeader },
-        cache: 'no-store',
-        credentials: 'include'
-      }),
-      fetch(`${API_BASE_URL}/api/investments/admin/plans`, {
-        headers: { Cookie: cookieHeader },
-        cache: 'no-store',
-        credentials: 'include'
-      }),
-      fetch(`${API_BASE_URL}/api/investment/my-investments`, {
-        headers: { Cookie: cookieHeader }, 
-        cache: 'no-store', 
-        credentials: 'include' 
-      }),
-    ]);
+        if (!profileRes.ok) {
+          router.push('/users/login');
+          return;
+        }
 
-    if (!profileRes.ok) return null;
+        const user = await profileRes.json();
+        const txData = txRes.ok ? await txRes.json() : null;
+        const plansData = plansRes.ok ? await plansRes.json() : [];
+        const investmentData = investmentRes.ok ? await investmentRes.json() : [];
 
-    const user = await profileRes.json();
-    const txData = txRes.ok ? await txRes.json() : null;
-    const plansData = plansRes.ok ? await plansRes.json() : [];
-    const investmentData = investmentRes.ok ? await investmentRes.json() : [];
+        let rawTransactions: Transaction[] = [];
 
-    let rawTransactions: Transaction[] = [];
+        if (txData) {
+          if (Array.isArray(txData)) {
+            rawTransactions = txData;
+          } else if (typeof txData === 'object') {
+            rawTransactions = 
+              txData.transactions || 
+              txData.data || 
+              txData.docs || 
+              txData.history || 
+              [];
+          }
+        }
 
-    if (txData) {
-      if (Array.isArray(txData)) {
-        rawTransactions = txData;
-      } else if (typeof txData === 'object') {
-        rawTransactions = 
-          txData.transactions || 
-          txData.data || 
-          txData.docs || 
-          txData.history || 
-          [];
+        const plans = Array.isArray(plansData) ? plansData : plansData.plans || [];
+        const investments = Array.isArray(investmentData) ? investmentData : investmentData.investments || [];
+
+        setData({ user, transactions: rawTransactions, plans, investments });
+      } catch (error) {
+        console.error('Failed to fetch dashboard data on client:', error);
+        router.push('/users/login');
+      } finally {
+        setLoading(false);
       }
     }
 
-    const plans = Array.isArray(plansData) ? plansData : plansData.plans || [];
-    const investments = Array.isArray(investmentData) ? investmentData : investmentData.investments || [];
+    fetchDashboardData();
+  }, [router]);
 
-    return { user, transactions: rawTransactions, plans, investments };
-  } catch (error) {
-    console.error('Failed to fetch dashboard data during SSR:', error);
-    return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 font-mono flex items-center justify-center">
+        <p className="text-sm text-gray-600 animate-pulse">Loading profile dashboard...</p>
+      </div>
+    );
   }
-}
-
-export default async function UserDashboard() {
-  const data = await getDashboardData();
 
   if (!data) {
-    redirect('/users/login');
+    return null;
   }
 
   const { user, transactions, plans, investments } = data;
-
   const userAvatarUrl = user.avatarUrl || '/default-avatar.png';
 
   return (
@@ -158,7 +168,7 @@ export default async function UserDashboard() {
         </div>
       </main>
 
-      {/* 2. Render Support Chat Widget in the bottom right corner */}
+      {/* Render Support Chat Widget in the bottom right corner */}
       <UserChatWidget user={{ _id: user._id, name: user.fullName }} />
     </div>
   );

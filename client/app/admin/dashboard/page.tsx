@@ -1,8 +1,9 @@
-// client/src/app/admin/dashboard/page.tsx
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import LogoutButton from './LogoutButton';
-import AdminChatDashboard from '@/components/AdminChatDashboard'; // <-- 1. Import the admin chat dashboard component
+import AdminChatDashboard from '@/components/AdminChatDashboard';
 
 interface AdminDashboardData {
   stats: {
@@ -25,54 +26,55 @@ interface AdminDashboardData {
   };
 }
 
-export const dynamic = 'force-dynamic';
+export default function AdminDashboardPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<AdminDashboardData | null>(null);
 
-async function getAdminData(): Promise<AdminDashboardData | null> {
-  try {
-    const headersList = await headers();
-    const cookieHeader = headersList.get('cookie') || '';
+  useEffect(() => {
+    async function fetchAdminData() {
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${backendUrl}/api/auth/admin-dashboard-data`, {
+          credentials: 'include',
+          cache: 'no-store',
+        });
 
-    const res = await fetch(`${backendUrl}/api/auth/admin-dashboard-data`, {
-      headers: {
-        Cookie: cookieHeader,
-      },
-      credentials: 'include',
-      cache: 'no-store',
-    });
+        if (res.status === 401 || res.status === 403 || !res.ok) {
+          router.push('/admin/login');
+          return;
+        }
 
-    if (res.status === 401 || res.status === 403) {
-      return null;
+        const json = await res.json();
+        setData(json);
+      } catch (error) {
+        console.error('Error fetching admin data on client:', error);
+        router.push('/admin/login');
+      } finally {
+        setLoading(false);
+      }
     }
 
-    if (!res.ok) {
-      throw new Error('Failed to fetch admin data');
-    }
+    fetchAdminData();
+  }, [router]);
 
-    return res.json();
-  } catch (error) {
-    console.error('Error fetching admin data:', error);
-    return null;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-mono">
+        <p className="text-sm text-gray-600 animate-pulse">Loading admin dashboard...</p>
+      </div>
+    );
   }
-}
-
-export default async function AdminDashboardPage() {
-  const data = await getAdminData();
 
   if (!data) {
-    redirect('/admin/login');
+    return null;
   }
 
-  // Provide a fallback ID if the admin profile object doesn't include _id
   const adminUser = {
     _id: data.currentAdmin._id || 'admin',
     name: data.currentAdmin.fullName
   };
-
-  if (!adminUser._id){
-    console.error('Admin user ID is missing from dashboard data!');
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 font-mono pb-24">

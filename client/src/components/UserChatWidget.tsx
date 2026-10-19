@@ -92,6 +92,11 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
             <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">✕</button>
           </div>
 
+          {/* support message*/}
+          <div className='bg-white font-mono w-full flex items-center justify-center'>
+            <p className='text-sm text-gray-500'>Need help? send us a message, we usually reply within minutes.</p>
+          </div>
+
           {/* Messages */}
           <div className="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
             {messages.map((msg, i) => (

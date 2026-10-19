@@ -29,10 +29,13 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
 
     // Listen for incoming messages in real-time
     socket.on('receive_message', (newMsg) => {
+      console.log('Socket received message:', newMsg); // <-- Check your browser console to see the exact structure
       setMessages(prev => [...prev, newMsg]);
 
       // If the chat widget is closed and message is from support/admin, trigger notification badge
-      if (!isOpenRef.current && newMsg.senderRole !== 'user') {
+      // Robust check: If the message sender is NOT the current user, it's from support/admin
+      const isFromAdmin = newMsg.senderId !== user._id && newMsg.sender !== user._id;
+      if (!isOpenRef.current && isFromAdmin) {
         setHasUnread(true);
       }
     });

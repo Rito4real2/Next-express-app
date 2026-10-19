@@ -17,7 +17,6 @@ export default function AdminPinGenerator() {
         credentials: 'include'
       });
       const data = await res.json();
-      console.log('users found', res.json())
       setUsers(Array.isArray(data) ? data : data.users || []);
     } catch (err) {
       setError('Failed to fetch users');
@@ -72,7 +71,7 @@ export default function AdminPinGenerator() {
             <tbody className="divide-y">
               {users.map((u) => (
                 <tr key={u._id} className="hover:bg-gray-50">
-                  <td className="p-2.5 font-medium">{u.userName}</td>
+                  <td className="p-2.5 font-medium text-gray-500">{u.userName}</td>
                   <td className="p-2.5 text-gray-600">{u.emailAddress}</td>
                   <td className="p-2.5 font-bold tracking-widest text-purple-700">
                     {u.withdrawalPin || 'Not Set'}

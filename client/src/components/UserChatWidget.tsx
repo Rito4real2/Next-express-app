@@ -7,7 +7,11 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
+  const [hasUnread, setHasUnread] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isOpenRef = useRef(isOpen);
+  isOpenRef.current = isOpen; // Keep ref updated to avoid stale closures in socket listener
 
   useEffect(() => {
     if (!user?._id) return;
@@ -16,7 +20,7 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
     socket.emit('join_room', user._id);
 
     // Load initial message history
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     fetch(`${backendUrl}/api/chat/messages/${user._id}`, {
       credentials: 'include'
     })
@@ -26,6 +30,11 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
     // Listen for incoming messages in real-time
     socket.on('receive_message', (newMsg) => {
       setMessages(prev => [...prev, newMsg]);
+
+      // If the chat widget is closed and message is from support/admin, trigger notification badge
+      if (!isOpenRef.current && newMsg.senderRole !== 'user') {
+        setHasUnread(true);
+      }
     });
 
     return () => {
@@ -35,8 +44,15 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
   }, [user._id]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isOpen]);
+
+  const handleOpen = () => {
+    setIsOpen(true);
+    setHasUnread(false); // Clear notification badge when opened
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,10 +72,13 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
     <div className="fixed bottom-6 right-6 z-50 font-mono">
       {!isOpen ? (
         <button 
-          onClick={() => setIsOpen(true)}
-          className="bg-black text-white px-4 py-3 rounded-full shadow-lg text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-all"
+          onClick={handleOpen}
+          className="relative bg-black text-white px-4 py-3 rounded-full shadow-lg text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-all flex items-center gap-2"
         >
           💬 Live Support
+          {hasUnread && (
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+          )}
         </button>
       ) : (
         <div className="bg-white w-80 h-96 rounded-2xl border shadow-2xl flex flex-col overflow-hidden">

@@ -27,6 +27,12 @@ export default function UserSettingsPage() {
       href: '/admin/settings/admin-investment-plans',
       icon: '📈',
     },
+    {
+      title: 'Edit Admin Authorization Pin',
+      description: 'Create and manage withdrawal pins',
+      href: '/admin/settings/admin-auth-pin',
+      icon: '📈',
+    },
   ];
 
   return (

@@ -17,6 +17,7 @@ export default function AdminPinGenerator() {
         credentials: 'include'
       });
       const data = await res.json();
+      console.log('users found', res)
       setUsers(Array.isArray(data) ? data : data.users || []);
     } catch (err) {
       setError('Failed to fetch users');

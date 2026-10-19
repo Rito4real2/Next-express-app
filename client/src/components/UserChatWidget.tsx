@@ -7,7 +7,7 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
-  const [hasUnread, setHasUnread] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isOpenRef = useRef(isOpen);
@@ -29,14 +29,13 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
 
     // Listen for incoming messages in real-time
     socket.on('receive_message', (newMsg) => {
-      console.log('Socket received message:', newMsg); // <-- Check your browser console to see the exact structure
       setMessages(prev => [...prev, newMsg]);
 
-      // If the chat widget is closed and message is from support/admin, trigger notification badge
       // Robust check: If the message sender is NOT the current user, it's from support/admin
       const isFromAdmin = newMsg.senderId !== user._id && newMsg.sender !== user._id;
+
       if (!isOpenRef.current && isFromAdmin) {
-        setHasUnread(true);
+        setUnreadCount(prev => prev + 1);
       }
     });
 
@@ -54,7 +53,7 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
 
   const handleOpen = () => {
     setIsOpen(true);
-    setHasUnread(false); // Clear notification badge when opened
+    setUnreadCount(0); // Reset unread count when opened
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -79,8 +78,10 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
           className="relative bg-black text-white px-4 py-3 rounded-full shadow-lg text-xs font-bold uppercase tracking-wider hover:bg-gray-800 transition-all flex items-center gap-2"
         >
           💬 Live Support
-          {hasUnread && (
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-md animate-pulse">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
           )}
         </button>
       ) : (

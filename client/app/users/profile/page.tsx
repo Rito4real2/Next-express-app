@@ -62,6 +62,10 @@ export default function UserDashboard() {
             cache: 'no-store',
             credentials: 'include'
           }),
+          fetch(`${API_BASE_URL}/api/investment/plans`, {
+            cache: 'no-store',
+            credentials: 'include'
+          }),
           fetch(`${API_BASE_URL}/api/investment/my-investments`, {
             cache: 'no-store', 
             credentials: 'include' 

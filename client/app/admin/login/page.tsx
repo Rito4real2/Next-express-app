@@ -2,8 +2,14 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function AdminLogin() {
+
+  useEffect(() =>{
+    // This runs safely in the browser and will print the baked-in string value
+    console.log('API URL in Client Component:', process.env.NEXT_PUBLIC_API_URL);
+  })
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

@@ -93,8 +93,8 @@ export default function UserChatWidget({ user }: { user: { _id: string; name: st
           </div>
 
           {/* support message*/}
-          <div className='bg-white font-mono w-full flex items-center justify-center'>
-            <p className='text-sm text-gray-500'>Need help? send us a message, we usually reply within minutes.</p>
+          <div className='bg-white font-mono w-full flex items-center justify-center p-3'>
+            <p className='text-xs text-gray-500'>Need help? send us a message, we usually reply within minutes.</p>
           </div>
 
           {/* Messages */}

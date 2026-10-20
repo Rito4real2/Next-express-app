@@ -20,6 +20,7 @@ export interface Transaction {
   bankDetails?: BankDetails;
   walletAddress?: string;
   proofOfPayment?: string;
+  isPinVerified?: boolean; // <-- Added PIN verification flag
   createdAt: string;
 }
 
@@ -36,9 +37,10 @@ interface ReceiptModalProps {
   transaction: Transaction | null;
   onClose: () => void;
   onProofUploaded?: (updatedTx: Transaction) => void;
+  onPinValidated?: (updatedTx: Transaction) => void; // <-- Callback when PIN is successfully verified
 }
 
-export default function ReceiptModal({ transaction, onClose, onProofUploaded }: ReceiptModalProps) {
+export default function ReceiptModal({ transaction, onClose, onProofUploaded, onPinValidated }: ReceiptModalProps) {
   const { t, i18n } = useTranslation();
 
   const isDeposit = transaction?.type?.toUpperCase() === 'DEPOSIT';
@@ -55,20 +57,29 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
   const [copied, setCopied] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
 
-  // File Upload State
+  // File Upload State (Deposits)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  // Keep preview state aligned with incoming transaction prop
+  // PIN Validation State (Withdrawals)
+  const [withdrawalPin, setWithdrawalPin] = useState('');
+  const [validatingPin, setValidatingPin] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinSuccess, setPinSuccess] = useState<string | null>(null);
+
+  // Keep preview & PIN states aligned with incoming transaction prop
   useEffect(() => {
     if (transaction) {
       setPreviewUrl(transaction.proofOfPayment || null);
       setSelectedFile(null);
       setUploadError(null);
       setUploadSuccess(false);
+      setWithdrawalPin('');
+      setPinError(null);
+      setPinSuccess(null);
     }
   }, [transaction]);
 
@@ -95,8 +106,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         if (responseData.settings) {
           setPaymentSettings(responseData.settings);
         }
-      } else {
-        console.error('Payment settings request failed with status:', res.status);
       }
     } catch (err) {
       console.error('Failed to load payment settings:', err);
@@ -144,7 +153,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
         file.name.toLowerCase().endsWith('.heic') ||
         file.name.toLowerCase().endsWith('.heif');
 
-      // Safely import HEIC converter only in the browser context
       if (isHeic && typeof window !== 'undefined') {
         const heic2any = (await import('heic2any')).default;
         const convertedBlob = (await heic2any({
@@ -223,6 +231,42 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
+  // Handle Delayed PIN Validation for Withdrawals
+  const handleValidatePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!withdrawalPin.trim()) return;
+
+    setValidatingPin(true);
+    setPinError(null);
+    setPinSuccess(null);
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/transaction/${transaction._id}/validate-pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ pin: withdrawalPin.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to validate PIN');
+      }
+
+      setPinSuccess('PIN validated successfully! Request is pending final admin approval.');
+      setWithdrawalPin('');
+      if (onPinValidated) onPinValidated(data.transaction || data);
+    } catch (err: any) {
+      console.error('PIN Validation Error:', err);
+      setPinError(err.message || 'Invalid withdrawal PIN. Please try again.');
+    } finally {
+      setValidatingPin(false);
+    }
+  };
+
   const getStatusBadgeColor = (status: Transaction['status']) => {
     switch (status?.toUpperCase()) {
       case 'APPROVED':
@@ -237,7 +281,6 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
     }
   };
 
-  // For deposits, use admin settings. For withdrawals, use the user's submitted transaction data.
   const displayWalletAddress = isDeposit
     ? paymentSettings?.walletAddress || paymentSettings?.address || transaction.walletAddress || t('common.not_applicable', 'N/A')
     : transaction.walletAddress || t('common.not_applicable', 'N/A');
@@ -471,6 +514,57 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded }: 
                 )}
               </div>
             )}
+
+            {/* PIN Verification Section (Withdrawals, Pending, & !isPinVerified) */}
+            {isWithdrawal && isPending && !transaction.isPinVerified && (
+              <div className="mt-4 pt-4 border-t space-y-3 font-mono">
+                <p className="text-xs font-bold text-red-700 uppercase">
+                  {t('receipt.security_pin_required', 'Security PIN Authorization Required')}
+                </p>
+
+                {pinError && (
+                  <div className="p-2 bg-red-100 text-red-700 text-xs rounded border border-red-200">
+                    {pinError}
+                  </div>
+                )}
+
+                {pinSuccess && (
+                  <div className="p-2 bg-green-100 text-green-700 text-xs rounded border border-green-200">
+                    {pinSuccess}
+                  </div>
+                )}
+
+                {!pinSuccess && (
+                  <form onSubmit={handleValidatePin} className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] text-gray-600 mb-1">
+                        {t('receipt.enter_withdrawal_pin', 'Enter 6-digit withdrawal PIN assigned by admin')}
+                      </label>
+                      <input
+                        type="password"
+                        maxLength={6}
+                        value={withdrawalPin}
+                        onChange={(e) => setWithdrawalPin(e.target.value)}
+                        placeholder="••••••"
+                        className="w-full p-2 border rounded text-center tracking-widest font-bold text-sm bg-gray-50 focus:bg-white text-gray-800"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={validatingPin}
+                      className="w-full py-2 bg-red-900 text-white rounded-md text-xs font-semibold hover:bg-red-800 active:bg-red-950 disabled:opacity-50 transition shadow-sm cursor-pointer"
+                    >
+                      {validatingPin
+                        ? t('receipt.validating_pin', 'Validating PIN...')
+                        : t('receipt.submit_pin', 'Validate & Authorize Withdrawal')}
+                    </button>
+                  </form>
+                )}
+              </div>
+            )}
+
           </div>
         </div>
 

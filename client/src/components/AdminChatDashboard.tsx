@@ -12,18 +12,25 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
 
   // 1. Fetch all chat threads on mount and setup socket listeners
   useEffect(() => {
+    if (!adminUser?._id) return;
+
     socket.connect();
 
-    // Fetch initial threads list
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
-    fetch(`${backendUrl}/api/chat/admin/threads`, { credentials: 'include' })
-      .then(res => res.json())
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+    // Fetch all chat threads for the admin inbox using adminUser._id
+    fetch(`${backendUrl}/api/chat/admin/threads/${adminUser._id}`, { credentials: 'include' })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch chat threads');
+        return res.json();
+      })
       .then(data => {
-        if (Array.isArray(data)) {
-          setThreads(data);
-          if (data.length > 0) setSelectedThread(data[0]); // Select first thread by default
+        if (Array.isArray(data.threads)) {
+          setThreads(data.threads);
+          if (data.threads.length > 0) setSelectedThread(data.threads[0]);
         }
-      });
+      })
+      .catch(err => console.error('Error fetching admin threads:', err));
 
     // Listen for new incoming messages across any thread to update thread list ordering
     socket.on('thread_updated', (updatedThread) => {
@@ -43,7 +50,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
       socket.off('thread_updated');
       socket.disconnect();
     };
-  }, []);
+  }, [adminUser?._id]);
 
   // 2. When a thread is selected, join user room and fetch messages
   useEffect(() => {
@@ -53,7 +60,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
     socket.emit('join_room', targetUserId);
 
     // Fetch messages for this thread
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     fetch(`${backendUrl}/api/chat/messages/${targetUserId}`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => setMessages(Array.isArray(data) ? data : []));
@@ -108,8 +115,9 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
           ) : (
             threads.map((thread) => {
               const isSelected = selectedThread?._id === thread._id;
-              const userName = thread.user?.name || 'Unknown User';
-              const userEmail = thread.user?.email || '';
+              // Access user details populated from the ChatThread schema
+              const userName = thread.user?.userName || 'Unknown User';
+              const userEmail = thread.user?.emailAddress || '';
 
               return (
                 <div 
@@ -122,7 +130,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold text-xs truncate">{userName}</span>
                     <span className={`text-[9px] ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
-                      {new Date(thread.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {thread.lastMessageAt ? new Date(thread.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
                   </div>
                   <p className={`text-[10px] truncate ${isSelected ? 'text-gray-300' : 'text-gray-500'}`}>
@@ -168,7 +176,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
                     </p>
                     <p>{msg.message}</p>
                     <span className="text-[8px] opacity-50 block text-right mt-1">
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
                   </div>
                 );

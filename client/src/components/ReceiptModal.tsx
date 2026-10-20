@@ -375,7 +375,7 @@ export default function ReceiptModal({ transaction, onClose, onProofUploaded, on
                         {isDeposit ? t('receipt.deposit_wallet', 'Deposit Wallet') : t('receipt.wallet_address', 'Wallet Address')}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-[150px]">
+                        <span className="font-mono text-xs font-medium text-gray-800 bg-gray-100 px-2 py-1 rounded select-all truncate max-w-37.5">
                           {displayWalletAddress}
                         </span>
                         {displayWalletAddress !== t('common.not_applicable', 'N/A') && (

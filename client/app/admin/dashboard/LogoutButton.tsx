@@ -7,9 +7,10 @@ export default function LogoutButton() {
   const router = useRouter();
 
   const handleLogout = async () => {
+    const API_BASED_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/admin/login');
+      await fetch(`${API_BASED_URL}/api/users/logout`, { method: 'POST' });
+      router.push('/');
       router.refresh();
     } catch (error) {
       console.error('Failed to log out:', error);

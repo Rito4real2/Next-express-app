@@ -107,7 +107,7 @@ export default function UserManagement() {
       }
     } else {
       // --- POST (Create) ---
-      const res = await fetch(`${API_BASE_URL}/api/users`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

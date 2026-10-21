@@ -25,22 +25,26 @@ export default function UserManagement() {
   const [userName, setUserName] = useState('');
   const [emailAddress, setEmailAddress] = useState('');
   const [password, setPassword] = useState('');
-  const [changePassword, setChangePassword] = useState(false); // Toggle password update in edit mode
+  const [changePassword, setChangePassword] = useState(false);
   const [gender, setGender] = useState('male');
   const [balance, setBalance] = useState(0);
   const [role, setRole] = useState<'user' | 'admin'>('user');
 
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
   // 1. Authenticate Current User
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/users/me', { 
+        const res = await fetch(`${API_BASE_URL}/api/users/me`, { 
           credentials: 'include',
         }); 
         if (res.ok) {
-          const userData: User = await res.json();
+          const data = await res.json();
+          // Handle both flat user object and nested { user: ... } response
+          const userData = data.user || data;
           setCurrentUser(userData);
         } else {
           setCurrentUser(null);
@@ -54,14 +58,16 @@ export default function UserManagement() {
     };
 
     checkAuth();
-  }, []);
+  }, [API_BASE_URL]);
 
   // 2. Load Users list only if current user is admin
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/users', { credentials: 'include' });
+      const res = await fetch(`${API_BASE_URL}/api/users`, { credentials: 'include' });
       const data = await res.json();
-      if (res.ok) setUsers(data);
+      if (res.ok) {
+        setUsers(Array.isArray(data) ? data : data.users || []);
+      }
     } catch (err) {
       console.error('Failed to load users:', err);
     }
@@ -85,9 +91,10 @@ export default function UserManagement() {
         updateData.password = password;
       }
 
-      const res = await fetch(`/api/users/${editingId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${editingId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(updateData),
       });
 
@@ -100,9 +107,10 @@ export default function UserManagement() {
       }
     } else {
       // --- POST (Create) ---
-      const res = await fetch('/api/users', {
+      const res = await fetch(`${API_BASE_URL}/api/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ fullName, userName, emailAddress, password, gender, balance, role }),
       });
 
@@ -121,7 +129,10 @@ export default function UserManagement() {
     setErrorMessage(null);
     if (!confirm('Are you sure you want to delete this user?')) return;
 
-    const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE_URL}/api/users/${id}`, { 
+      method: 'DELETE',
+      credentials: 'include'
+    });
     const data = await res.json();
 
     if (res.ok) {
@@ -159,22 +170,23 @@ export default function UserManagement() {
 
   // 3. Render Guarding
   if (isLoadingAuth) {
-    return <div className="p-8 text-center text-gray-500">Checking authorization...</div>;
+    return <div className="p-8 text-center text-gray-500 font-mono">Checking authorization...</div>;
   }
 
   if (!currentUser || currentUser.role !== 'admin') {
     return (
-      <div className="max-w-md mx-auto mt-12 p-6 bg-red-50 border border-red-200 text-red-700 rounded text-center space-y-2">
+      <div className="max-w-md mx-auto mt-12 p-6 bg-red-50 border border-red-200 text-red-700 rounded text-center space-y-2 font-mono">
         <h2 className="text-lg font-bold">Access Denied</h2>
         <p className="text-sm">You must be an administrator to access user management.</p>
+        <p className="text-xs text-gray-500 mt-2">Logged in as: {currentUser?.userName || 'Guest'} ({currentUser?.role || 'No Role'})</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8 space-y-8">
+    <div className="max-w-4xl mx-auto p-8 space-y-8 font-mono">
       {errorMessage && (
-        <div className="p-4 bg-red-100 text-red-700 rounded border border-red-300">
+        <div className="p-4 bg-red-100 text-red-700 rounded border border-red-300 text-xs">
           {errorMessage}
         </div>
       )}
@@ -192,9 +204,9 @@ export default function UserManagement() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <label className="block font-medium text-gray-700">Full Name</label>
             <input
               type="text"
               value={fullName}
@@ -205,7 +217,7 @@ export default function UserManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Username</label>
+            <label className="block font-medium text-gray-700">Username</label>
             <input
               type="text"
               value={userName}
@@ -216,7 +228,7 @@ export default function UserManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email Address</label>
+            <label className="block font-medium text-gray-700">Email Address</label>
             <input
               type="email"
               value={emailAddress}
@@ -229,7 +241,7 @@ export default function UserManagement() {
           {/* Password field logic */}
           {!editingId ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block font-medium text-gray-700">Password</label>
               <input
                 type="password"
                 value={password}
@@ -241,7 +253,7 @@ export default function UserManagement() {
           ) : (
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-700">Password</label>
+                <label className="font-medium text-gray-700">Password</label>
                 <label className="flex items-center text-xs text-gray-600 cursor-pointer">
                   <input
                     type="checkbox"
@@ -265,7 +277,7 @@ export default function UserManagement() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Gender</label>
+            <label className="block font-medium text-gray-700">Gender</label>
             <select
               value={gender}
               onChange={(e) => setGender(e.target.value)}
@@ -278,7 +290,7 @@ export default function UserManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Balance ($)</label>
+            <label className="block font-medium text-gray-700">Balance ($)</label>
             <input
               type="number"
               value={balance}
@@ -289,7 +301,7 @@ export default function UserManagement() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Role</label>
+            <label className="block font-medium text-gray-700">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'user' | 'admin')}
@@ -304,7 +316,7 @@ export default function UserManagement() {
         <div className="flex gap-2 pt-2">
           <button
             type="submit"
-            className={`px-4 py-2 text-white font-medium rounded transition-colors ${
+            className={`px-4 py-2 text-white font-medium rounded transition-colors text-xs ${
               editingId
                 ? 'bg-amber-600 hover:bg-amber-700'
                 : 'bg-blue-600 hover:bg-blue-700'
@@ -316,7 +328,7 @@ export default function UserManagement() {
             <button
               type="button"
               onClick={resetForm}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-medium transition-colors"
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-medium transition-colors text-xs"
             >
               Cancel Edit
             </button>
@@ -341,10 +353,10 @@ export default function UserManagement() {
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-gray-900">{u.fullName}</span>
+                    <span className="font-bold text-gray-900 text-sm">{u.fullName}</span>
                     <span className="text-xs text-gray-500">(@{u.userName})</span>
                     <span
-                      className={`text-xs px-2 py-0.5 rounded font-semibold ${
+                      className={`text-[10px] px-2 py-0.5 rounded font-semibold uppercase ${
                         u.role === 'admin'
                           ? 'bg-purple-100 text-purple-800 border border-purple-200'
                           : 'bg-gray-100 text-gray-800 border border-gray-200'
@@ -353,10 +365,10 @@ export default function UserManagement() {
                       {u.role}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs text-gray-600 mt-1">
                     {u.emailAddress} • <span className="capitalize">{u.gender}</span>
                   </p>
-                  <p className="text-sm font-semibold text-green-700 mt-1">
+                  <p className="text-xs font-semibold text-green-700 mt-1">
                     Balance: ${u.balance.toFixed(2)}
                   </p>
                 </div>
@@ -364,7 +376,7 @@ export default function UserManagement() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleEditClick(u)}
-                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                    className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
                       isCurrentlyEditing
                         ? 'bg-amber-600 text-white'
                         : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
@@ -374,7 +386,7 @@ export default function UserManagement() {
                   </button>
                   <button
                     onClick={() => handleDelete(u._id)}
-                    className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded text-sm font-medium hover:bg-red-100 transition-colors"
+                    className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded text-xs font-medium hover:bg-red-100 transition-colors"
                   >
                     Delete
                   </button>

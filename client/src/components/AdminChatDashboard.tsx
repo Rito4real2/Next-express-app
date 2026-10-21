@@ -87,7 +87,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
     e.preventDefault();
     if (!input.trim() || !selectedThread) return;
 
-    const targetUserId = selectedThread.user._id || selectedThread.user;
+    const targetUserId = selectedThread.user._id || selectedThread.user.id;
 
     socket.emit('send_message', {
       userId: targetUserId,
@@ -150,8 +150,8 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
             {/* Chat Header */}
             <div className="p-4 border-b flex justify-between items-center bg-gray-50">
               <div>
-                <h4 className="text-xs font-bold text-gray-900">{selectedThread.user?.name || 'User'}</h4>
-                <p className="text-[10px] text-gray-500">{selectedThread.user?.email}</p>
+                <h4 className="text-xs font-bold text-gray-900">{selectedThread.user?.userName || 'User'}</h4>
+                <p className="text-[10px] text-gray-500">{selectedThread.user?.emailAddress}</p>
               </div>
               <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
                 {selectedThread.status || 'Active'}
@@ -172,7 +172,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
                     }`}
                   >
                     <p className="text-[9px] font-bold mb-1 opacity-60">
-                      {isAdmin ? 'Admin Support' : selectedThread.user?.name}
+                      {isAdmin ? 'Admin Support' : selectedThread.user?.userName}
                     </p>
                     <p>{msg.message}</p>
                     <span className="text-[8px] opacity-50 block text-right mt-1">

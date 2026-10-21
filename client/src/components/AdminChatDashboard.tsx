@@ -19,7 +19,7 @@ export default function AdminChatDashboard({ adminUser }: { adminUser: { _id: st
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
     // Fetch all chat threads for the admin inbox using adminUser._id
-    fetch(`${backendUrl}/api/chat/admin/threads`, { credentials: 'include' })
+    fetch(`${backendUrl}/api/chat/admin/threads/:userId`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch chat threads');
         return res.json();

@@ -27,7 +27,7 @@ export default function AdminLogin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // <--- CRITICAL: Allows browser to save HTTP-Only JWT Cookie
-        body: JSON.stringify({ userName, emailAddress: userName, password }),
+        body: JSON.stringify({ userName, password }),
       });
 
       const data = await res.json();

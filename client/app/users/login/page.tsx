@@ -36,6 +36,8 @@ export default function UserLoginPage() {
         return;
       }
 
+      window.dispatchEvent(new Event('authChange'));
+
       // Redirect user to dashboard
       router.push('/users/profile');
       

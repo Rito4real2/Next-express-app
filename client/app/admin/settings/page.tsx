@@ -33,6 +33,12 @@ export default function UserSettingsPage() {
       href: '/admin/settings/admin-auth-pin',
       icon: '📈',
     },
+    {
+      title: 'Edit KYC Upload Authorization',
+      description: 'Approve and reject user kyc uploads',
+      href: '/admin/kyc',
+      icon: '📈',
+    },
   ];
 
   return (

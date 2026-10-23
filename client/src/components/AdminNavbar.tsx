@@ -1,7 +1,7 @@
 // client/src/components/AdminNavbar.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 export default function AdminNavbar() {
@@ -11,31 +11,45 @@ export default function AdminNavbar() {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/admin-dashboard-data`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include', // Sends HttpOnly auth cookie to Express backend
-        });
+  // 1. Auth status check function wrapped in useCallback
+  const checkAuthStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/admin-dashboard-data`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Sends HttpOnly admin auth cookie to Express backend
+      });
 
-        if (res.ok) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
-      } catch (error) {
+      if (res.ok) {
+        setIsLoggedIn(true);
+      } else {
         setIsLoggedIn(false);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      setIsLoggedIn(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [API_BASE_URL]);
+
+  // 2. Listen for mount & custom 'authChange' / 'storage' events
+  useEffect(() => {
+    checkAuthStatus();
+
+    const handleAuthChange = () => {
+      checkAuthStatus();
     };
 
-    checkAuthStatus();
-  }, [API_BASE_URL]);
+    window.addEventListener('authChange', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('authChange', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, [checkAuthStatus]);
 
   return (
     <header className="w-full flex justify-center bg-gray-100">

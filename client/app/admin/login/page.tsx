@@ -37,8 +37,11 @@ export default function AdminLogin() {
         return;
       }
 
+      window.dispatchEvent(new Event('authChange'));
+
       // Successfully authenticated
       router.push('/admin/dashboard');
+      
       router.refresh(); // Refresh route tree so server components re-evaluate headers/cookies
     } catch (err) {
       setError('An unexpected network error occurred');

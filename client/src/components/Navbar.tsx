@@ -1,7 +1,6 @@
-// client/src/components/Navbar.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useIsMounted } from '@/hooks/useIsMounted';
@@ -19,6 +18,7 @@ export default function Navbar() {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+  // 1. Language Handler
   useEffect(() => {
     if (i18n.language) {
       setSelectedLang(i18n.language);
@@ -35,31 +35,46 @@ export default function Navbar() {
     };
   }, [i18n]);
 
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        });
+  // 2. Auth status check wrapped in useCallback
+  const checkAuthStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
 
-        if (res.ok) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
-      } catch (error) {
+      if (res.ok) {
+        setIsLoggedIn(true);
+      } else {
         setIsLoggedIn(false);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      setIsLoggedIn(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [API_BASE_URL]);
+
+  // 3. Listen for mount & custom 'authChange' / 'storage' events
+  useEffect(() => {
+    checkAuthStatus();
+
+    // Listen for custom login/logout events dispatched anywhere in the app
+    const handleAuthChange = () => {
+      checkAuthStatus();
     };
 
-    checkAuthStatus();
-  }, [API_BASE_URL]);
+    window.addEventListener('authChange', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('authChange', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, [checkAuthStatus]);
 
   const toggleMenu = () => setIsOpen((prev) => !prev);
   const closeMenu = () => setIsOpen(false);
@@ -194,7 +209,7 @@ export default function Navbar() {
               )}
             </li>
 
-            {/* Logout Button integrated cleanly into the navigation list */}
+            {/* Logout Button */}
             {!loading && isLoggedIn && (
               <li className="w-full md:w-auto flex items-center justify-center">
                 <UserLogoutButton />

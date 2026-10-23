@@ -66,7 +66,10 @@ export default function UserSettingsPage() {
         />
 
         {/* Email Verification Component */}
-        <EmailVerification email={userData.emailAddress} isVerified={userData.isEmailVerified} />
+        <EmailVerification 
+        key={`${userData.emailAddress}-${userData.isEmailVerified}`}
+        email={userData.emailAddress} 
+        isVerified={userData.isEmailVerified} />
 
         {/* KYC Upload Component */}
         <KycUpload 

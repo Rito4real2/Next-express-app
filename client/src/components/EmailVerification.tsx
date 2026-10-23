@@ -15,6 +15,11 @@ export default function EmailVerification({ email, isVerified }: EmailProps) {
 
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+  // Keep local state in sync if parent profile data updates
+  useEffect(() => {
+    setVerified(isVerified);
+  }, [isVerified]);
+
   // Automatically check for token in URL on component mount
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -59,6 +64,8 @@ export default function EmailVerification({ email, isVerified }: EmailProps) {
 
       setVerified(true);
       setMessage('Email verified successfully!');
+
+      window.dispatchEvent(new Event('authChange'));
       
       // Clean up the token from the URL bar without reloading the page
       window.history.replaceState({}, document.title, window.location.pathname);

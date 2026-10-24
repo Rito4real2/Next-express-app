@@ -129,9 +129,7 @@ export default function UserDashboard() {
         <div className="max-w-4xl mx-auto space-y-6">
           
           {/* Header & Stats Client Wrapper */}
-          <ProfileDashboardClient user={{ ...user, avatarUrl: userAvatarUrl }}>
-            <UserLogoutButton />
-          </ProfileDashboardClient>
+          <ProfileDashboardClient user={{ ...user, avatarUrl: userAvatarUrl }} />
 
           {/* Account Details Section */}
           <AccountDetails user={{ ...user }} />

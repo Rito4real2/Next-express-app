@@ -19,11 +19,10 @@ interface UserProfile {
 }
 
 interface ProfileDashboardClientProps {
-  user: UserProfile;
-  children: React.ReactNode; // For UserLogoutButton
+  user: UserProfile; // For UserLogoutButton
 }
 
-export default function ProfileDashboardClient({ user, children }: { user: UserProfile; children: React.ReactNode }) {
+export default function ProfileDashboardClient({ user}: { user: UserProfile; }) {
   return (
     <div className="bg-linear-to-r from-red-950 via-red-900 to-red-800 p-6 rounded-xl border border-gray-200 shadow-sm flex md:flex-row items-center justify-between gap-6">
       

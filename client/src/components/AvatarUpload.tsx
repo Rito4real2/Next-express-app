@@ -1,7 +1,7 @@
 // components/AvatarUpload.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 interface AvatarUploadProps {
@@ -13,11 +13,19 @@ export default function AvatarUpload({
   currentAvatarUrl = '/default-avatar.png',
   onAvatarUpdated,
 }: AvatarUploadProps) {
-  const [preview, setPreview] = useState<string>(currentAvatarUrl);
+  // Use fallback if currentAvatarUrl is empty string or null
+  const [preview, setPreview] = useState<string>(currentAvatarUrl || '/default-avatar.png');
   const [uploading, setUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+  // 🔍 Keep local preview state synchronized when parent profile finishes loading/updating
+  useEffect(() => {
+    if (currentAvatarUrl) {
+      setPreview(currentAvatarUrl);
+    }
+  }, [currentAvatarUrl]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,7 +42,8 @@ export default function AvatarUpload({
     }
 
     setError(null);
-    setPreview(URL.createObjectURL(file)); // Immediate local preview
+    const localBlobUrl = URL.createObjectURL(file);
+    setPreview(localBlobUrl); // Immediate local preview
     setUploading(true);
 
     const formData = new FormData();
@@ -43,22 +52,30 @@ export default function AvatarUpload({
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/profile/avatar`, {
         method: 'POST',
-        credentials: 'include', // Pass HTTP-only auth cookies if needed
+        credentials: 'include',
         body: formData,
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to upload image');
+        throw new Error(data.error || data.message || 'Failed to upload image');
+      }
+
+      // Ensure we have the Cloudinary secure URL from the response
+      const updatedUrl = data.avatarUrl || data.user?.avatarUrl;
+      if (updatedUrl) {
+        setPreview(updatedUrl);
       }
 
       // Notify parent component of updated image URL
-      if (onAvatarUpdated) {
-        onAvatarUpdated(data.avatarUrl);
+      if (onAvatarUpdated && updatedUrl) {
+        onAvatarUpdated(updatedUrl);
       }
     } catch (err: any) {
       setError(err.message || 'Upload failed. Please try again.');
+      // Revert preview back to previous known good URL on error
+      setPreview(currentAvatarUrl || '/default-avatar.png');
     } finally {
       setUploading(false);
     }
@@ -72,6 +89,7 @@ export default function AvatarUpload({
           src={preview}
           alt="Profile Avatar"
           fill
+          unoptimized={preview.startsWith('blob:')} // Bypass Next.js image optimization for local object URLs
           className="object-cover"
         />
         {uploading && (
